@@ -315,9 +315,9 @@ def compila():
                      as_attachment=True, download_name=nome_file)
 
 if __name__ == "__main__":
-    
     app.run(debug=True, port=7860)
     if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+       import os
+       port = int(os.environ.get("PORT", 10000))
+       app.run(host="0.0.0.0", port=port)
+  
