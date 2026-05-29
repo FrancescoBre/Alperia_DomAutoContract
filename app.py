@@ -1,36 +1,116 @@
 from flask import Flask, request, send_file, jsonify
 from pypdf import PdfReader, PdfWriter
-import io, os, json
+import io, os, json, copy
 from datetime import datetime
 
 app = Flask(__name__)
 
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "template_alperia.pdf")
-OFFERTE_PATH  = os.path.join(os.path.dirname(__file__), "offerte.json")
 
-# --- Offerte: carica da file o usa default ---
+# ─────────────────────────────────────────────────────────────
+# OFFERTE DEFAULT — modifica qui e fai push su GitHub
+# per aggiornare le offerte su Render in modo permanente
+# ─────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# OFFERTE DEFAULT — usate come fallback se il DB non è disponibile
+# ─────────────────────────────────────────────────────────────
 DEFAULT_OFFERTE = {
     "luce": [
-        {"nome": "Direct Energy",      "codice": "DIRE-EE"},
-        {"nome": "Direct Energy Plus", "codice": "DIRE-EE-PLUS"},
-        {"nome": "Alperia Luce Fissa", "codice": "ALF-EE"},
+        {"nome": "Alperia Direct Energy", "codice": "DIRE-EE"},
     ],
     "gas": [
-        {"nome": "Gas Smile Start", "codice": "GSS-GN"},
-        {"nome": "Gas Smile Fisso", "codice": "GSF-GN"},
-        {"nome": "Alperia Gas Fissa", "codice": "AGF-GN"},
+        {"nome": "Alperia Gas Smile Start", "codice": "GSS-GN"},
     ]
 }
 
+# ─────────────────────────────────────────────────────────────
+# DATABASE — usa Supabase/PostgreSQL se DATABASE_URL è presente,
+# altrimenti cade su storage in memoria
+# ─────────────────────────────────────────────────────────────
+import os
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+def get_db():
+    """Apre una connessione al database PostgreSQL."""
+    import psycopg2
+    url = DATABASE_URL
+    # Render usa postgres:// ma psycopg2 vuole postgresql://
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    return psycopg2.connect(url)
+
+def init_db():
+    """Crea la tabella offerte se non esiste e inserisce i default."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS offerte (
+                id SERIAL PRIMARY KEY,
+                tipo TEXT NOT NULL,
+                nome TEXT NOT NULL,
+                codice TEXT NOT NULL
+            )
+        """)
+        # Inserisce i default solo se la tabella è vuota
+        cur.execute("SELECT COUNT(*) FROM offerte")
+        if cur.fetchone()[0] == 0:
+            for tipo, lista in DEFAULT_OFFERTE.items():
+                for o in lista:
+                    cur.execute(
+                        "INSERT INTO offerte (tipo, nome, codice) VALUES (%s, %s, %s)",
+                        (tipo, o["nome"], o["codice"])
+                    )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"DB init warning: {e}")
+
+# Storage in memoria — fallback se DATABASE_URL non è configurato
+_offerte_runtime = copy.deepcopy(DEFAULT_OFFERTE)
+
 def load_offerte():
-    if os.path.exists(OFFERTE_PATH):
-        with open(OFFERTE_PATH) as f:
-            return json.load(f)
-    return DEFAULT_OFFERTE
+    if DATABASE_URL:
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("SELECT tipo, nome, codice FROM offerte ORDER BY id")
+            rows = cur.fetchall()
+            cur.close(); conn.close()
+            result = {"luce": [], "gas": []}
+            for tipo, nome, codice in rows:
+                if tipo in result:
+                    result[tipo].append({"nome": nome, "codice": codice})
+            return result
+        except Exception as e:
+            print(f"DB load error: {e}")
+    return copy.deepcopy(_offerte_runtime)
 
 def save_offerte(data):
-    with open(OFFERTE_PATH, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    if DATABASE_URL:
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM offerte")
+            for tipo, lista in data.items():
+                for o in lista:
+                    cur.execute(
+                        "INSERT INTO offerte (tipo, nome, codice) VALUES (%s, %s, %s)",
+                        (tipo, o["nome"], o["codice"])
+                    )
+            conn.commit()
+            cur.close(); conn.close()
+            return
+        except Exception as e:
+            print(f"DB save error: {e}")
+    global _offerte_runtime
+    _offerte_runtime = copy.deepcopy(data)
+
+# Inizializza il DB all'avvio se DATABASE_URL è configurato
+if DATABASE_URL:
+    init_db()
 
 # --- Routes ---
 
@@ -65,6 +145,19 @@ def elimina_offerta():
     idx  = d.get("index")
     if 0 <= idx < len(offerte[tipo]):
         offerte[tipo].pop(idx)
+        save_offerte(offerte)
+    return jsonify({"ok": True, "offerte": offerte})
+
+@app.route("/api/offerte/modifica", methods=["POST"])
+def modifica_offerta():
+    d      = request.json
+    tipo   = d.get("tipo")
+    idx    = d.get("index")
+    nome   = d.get("nome", "").strip()
+    codice = d.get("codice", "").strip()
+    offerte = load_offerte()
+    if nome and codice and 0 <= idx < len(offerte.get(tipo, [])):
+        offerte[tipo][idx] = {"nome": nome, "codice": codice}
         save_offerte(offerte)
     return jsonify({"ok": True, "offerte": offerte})
 
@@ -192,8 +285,18 @@ def compila():
     d = request.json
     today = datetime.now().strftime("%d/%m/%Y")
 
-    tipo_luce_map     = {"switch": "/Auswahl4", "subentro": "/Auswahl5", "voltura": "/Auswahl6", "nuova": "/Auswahl7"}
-    tipo_gas_map      = {"switch": "/Auswahl4", "subentro": "/Auswahl5", "voltura": "/Auswahl6", "nuova": "/Auswahl7"}
+    tipo_map = {"switch": "/Auswahl4", "subentro": "/Auswahl5", "voltura": "/Auswahl6", "nuova": "/Auswahl7"}
+
+    def get_tipo(val):
+        # val può essere lista o stringa
+        if isinstance(val, list) and val:
+            return tipo_map.get(val[0], "/Auswahl4")
+        if isinstance(val, str) and val:
+            return tipo_map.get(val, "/Auswahl4")
+        return "/Auswahl4"
+
+    tipo_luce_map = tipo_map  # mantenuto per compatibilità
+    tipo_gas_map  = tipo_map
     tipologia_uso_map = {"residente": "/Auswahl1", "non_residente": "/Auswahl2", "altri": "/Auswahl3"}
     titolo_map        = {"proprieta": "/proprietà/usufrutto", "locazione": "/locazione/affitto", "altro": "/detenzione altro titolo"}
     doc_map           = {"ci": "/carta identità", "patente": "/patente", "passaporto": "/passaporto"}
@@ -201,8 +304,6 @@ def compila():
     fields = {}
 
     # Header
-    fields["Agente"] = d.get("agente", "")
-    fields["Proposta"] = d.get("proposta", "")
 
     # Dati cliente
     fields["Cognome"]  = d.get("cognome", "")
@@ -315,6 +416,7 @@ def compila():
                      as_attachment=True, download_name=nome_file)
 
 if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    # In locale usa porta 7860, su Render usa la variabile PORT
+    port = int(os.environ.get("PORT", 7860))
+    debug = os.environ.get("RENDER") is None  # debug solo in locale
+    app.run(debug=debug, host="0.0.0.0", port=port)
