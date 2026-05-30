@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CABONA · Contratti Alperia — Domestico</title>
+<title>Compilatore Contratti · Alperia Domestico</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
   :root {
@@ -84,7 +84,8 @@
   .cpill{display:flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:500;color:var(--text-mid);background:var(--surface);transition:all .15s;user-select:none}
   .cpill input{display:none}
   .cpill.sel-gas{border-color:var(--gas);background:var(--gas-light);color:var(--gas)}
-  .cpill:hover{border-color:var(--gas);color:var(--gas)}
+  .cpill.sel-luce{border-color:var(--luce);background:var(--luce-light);color:var(--luce)}
+  .cpill:hover{border-color:var(--border-strong);color:var(--text)}
   /* Fornitura cards */
   .fcards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px}
   .fcard{border:2px solid var(--border);border-radius:var(--r);padding:13px;cursor:pointer;transition:all .15s;user-select:none}
@@ -164,7 +165,7 @@
 <body>
 
 <div class="header">
-  <div><div class="hbrand">CABONA</div><div class="hsub">Contratti Alperia · <strong style="opacity:.9">Domestico</strong></div></div>
+  <div><div class="hbrand">Compilatore Contratti</div><div class="hsub">Alperia Smart Services · <strong style="opacity:.9">Domestico</strong></div></div>
   <div style="display:flex;gap:7px;align-items:center"><div class="hbadge" style="background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)">🏠 Domestico</div><div class="hbadge">Alperia</div></div>
 </div>
 
@@ -178,22 +179,8 @@
 <div class="tab-panel active" id="tab-contratto">
 <div class="main">
 
-  <div class="agente-bar">
-    <span>👤</span><span>Agenzia: <strong>CABONA</strong> · Agente: <strong id="agente-display">—</strong></span>
-  </div>
 
-  <!-- Agente -->
-  <div class="section" id="sec-agente">
-    <div class="section-header" onclick="toggleSec('sec-agente')">
-      <div class="sicon ic-gray">⚙️</div><div class="stitle">Impostazioni Agente</div><div class="schev">▼</div>
-    </div>
-    <div class="section-body">
-      <div class="g g2">
-        <div class="field"><label>Nome Agente</label><input type="text" id="agente_nome" placeholder="es. Francesco Rossi" oninput="updateAgente()"></div>
-        <div class="field"><label>N° Proposta</label><input type="text" id="proposta_num" placeholder="es. 2025-001" class="mono"></div>
-      </div>
-    </div>
-  </div>
+
 
   <!-- Tipo fornitura -->
   <div class="section" id="sec-fornitura">
@@ -290,12 +277,12 @@
       <div class="sicon ic-luce">⚡</div><div class="stitle">Energia Elettrica</div><div class="schev">▼</div>
     </div>
     <div class="section-body">
-      <div class="sep">Tipo Richiesta</div>
+      <div class="sep">Tipo Richiesta <span style="font-size:10px;color:var(--text-soft);text-transform:none;letter-spacing:0;font-weight:400"> — seleziona una o più voci</span></div>
       <div class="rg" id="rg-tipo-luce">
-        <label class="rpill sel-luce sel" onclick="selR('rg-tipo-luce',this,'switch')"><input type="radio" value="switch" checked> Switch</label>
-        <label class="rpill sel-luce" onclick="selR('rg-tipo-luce',this,'subentro')"><input type="radio" value="subentro"> Subentro</label>
-        <label class="rpill sel-luce" onclick="selR('rg-tipo-luce',this,'voltura')"><input type="radio" value="voltura"> Voltura</label>
-        <label class="rpill sel-luce" onclick="selR('rg-tipo-luce',this,'nuova')"><input type="radio" value="nuova"> Nuova Attivazione</label>
+        <label class="cpill" id="tl-switch"  onclick="toggleTipo('luce','switch',this)">Switch</label>
+        <label class="cpill" id="tl-subentro" onclick="toggleTipo('luce','subentro',this)">Subentro</label>
+        <label class="cpill" id="tl-voltura"  onclick="toggleTipo('luce','voltura',this)">Voltura</label>
+        <label class="cpill" id="tl-nuova"    onclick="toggleTipo('luce','nuova',this)">Nuova Attivazione</label>
       </div>
       <div class="g g2" style="margin-top:11px">
         <div class="field"><label>Codice POD</label><input type="text" id="pod" placeholder="IT001E00000000" class="mono" oninput="this.value=this.value.toUpperCase()"></div>
@@ -326,12 +313,12 @@
       <div class="sicon ic-gas">🔥</div><div class="stitle">Gas Naturale</div><div class="schev">▼</div>
     </div>
     <div class="section-body">
-      <div class="sep">Tipo Richiesta</div>
+      <div class="sep">Tipo Richiesta <span style="font-size:10px;color:var(--text-soft);text-transform:none;letter-spacing:0;font-weight:400"> — seleziona una o più voci</span></div>
       <div class="rg" id="rg-tipo-gas">
-        <label class="rpill sel-gas sel" onclick="selR('rg-tipo-gas',this,'switch')"><input type="radio" value="switch" checked> Switch</label>
-        <label class="rpill sel-gas" onclick="selR('rg-tipo-gas',this,'subentro')"><input type="radio" value="subentro"> Subentro</label>
-        <label class="rpill sel-gas" onclick="selR('rg-tipo-gas',this,'voltura')"><input type="radio" value="voltura"> Voltura</label>
-        <label class="rpill sel-gas" onclick="selR('rg-tipo-gas',this,'nuova')"><input type="radio" value="nuova"> Nuova Attivazione</label>
+        <label class="cpill" id="tg-switch"   onclick="toggleTipo('gas','switch',this)">Switch</label>
+        <label class="cpill" id="tg-subentro"  onclick="toggleTipo('gas','subentro',this)">Subentro</label>
+        <label class="cpill" id="tg-voltura"   onclick="toggleTipo('gas','voltura',this)">Voltura</label>
+        <label class="cpill" id="tg-nuova"     onclick="toggleTipo('gas','nuova',this)">Nuova Attivazione</label>
       </div>
       <div class="g g2" style="margin-top:11px">
         <div class="field"><label>Codice PDR</label><input type="text" id="pdr" placeholder="10000000000" class="mono"></div>
@@ -555,6 +542,8 @@ Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.
 <script>
 // ─── State ────────────────────────────────────────────────
 let vuoleLuce = false, vuoleGas = false;
+let tipiLuce = new Set();
+let tipiGas  = new Set();
 let offerte = {luce:[], gas:[]};
 let categorie_gas = new Set();
 let estrattiBolletta = null;
@@ -586,12 +575,54 @@ function renderOfferteManager(){
     const el = document.getElementById(`lista-offerte-${tipo}`);
     if(!offerte[tipo].length){ el.innerHTML='<p style="font-size:12px;color:var(--text-soft);padding:6px 0">Nessuna offerta configurata.</p>'; return; }
     el.innerHTML = offerte[tipo].map((o,i)=>`
-      <div class="offerta-row">
-        <span class="offerta-nome">${o.nome}</span>
-        <span class="offerta-cod">${o.codice}</span>
-        <button class="offerta-del" onclick="eliminaOfferta('${tipo}',${i})" title="Elimina">✕</button>
+      <div class="offerta-row" id="offerta-row-${tipo}-${i}">
+        <div id="offerta-view-${tipo}-${i}" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+          <span class="offerta-nome">${o.nome}</span>
+          <span class="offerta-cod">${o.codice}</span>
+        </div>
+        <div id="offerta-edit-${tipo}-${i}" style="display:none;flex:1;gap:6px;align-items:center">
+          <input type="text" id="edit-nome-${tipo}-${i}" value="${o.nome}" style="flex:1;padding:4px 7px;font-size:12px;border:1px solid var(--accent);border-radius:4px;outline:none">
+          <input type="text" id="edit-cod-${tipo}-${i}"  value="${o.codice}" style="width:110px;padding:4px 7px;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--accent);border-radius:4px;outline:none">
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="offerta-del" id="btn-edit-${tipo}-${i}"  onclick="iniziaModifica('${tipo}',${i})"  title="Modifica" style="color:var(--accent)">✏️</button>
+          <button class="offerta-del" id="btn-save-${tipo}-${i}"  onclick="salvaModifica('${tipo}',${i})"   title="Salva"    style="display:none;color:var(--green)">✓</button>
+          <button class="offerta-del" id="btn-cancel-${tipo}-${i}" onclick="annullaModifica('${tipo}',${i})" title="Annulla"  style="display:none">✕</button>
+          <button class="offerta-del" id="btn-del-${tipo}-${i}"   onclick="eliminaOfferta('${tipo}',${i})"  title="Elimina"  style="color:var(--text-soft)">🗑</button>
+        </div>
       </div>`).join('');
   });
+}
+
+function iniziaModifica(tipo, idx){
+  document.getElementById(`offerta-view-${tipo}-${idx}`).style.display  = 'none';
+  document.getElementById(`offerta-edit-${tipo}-${idx}`).style.display  = 'flex';
+  document.getElementById(`btn-edit-${tipo}-${idx}`).style.display      = 'none';
+  document.getElementById(`btn-save-${tipo}-${idx}`).style.display      = 'inline-flex';
+  document.getElementById(`btn-cancel-${tipo}-${idx}`).style.display    = 'inline-flex';
+  document.getElementById(`btn-del-${tipo}-${idx}`).style.display       = 'none';
+  document.getElementById(`edit-nome-${tipo}-${idx}`).focus();
+}
+
+function annullaModifica(tipo, idx){
+  document.getElementById(`offerta-view-${tipo}-${idx}`).style.display  = 'flex';
+  document.getElementById(`offerta-edit-${tipo}-${idx}`).style.display  = 'none';
+  document.getElementById(`btn-edit-${tipo}-${idx}`).style.display      = 'inline-flex';
+  document.getElementById(`btn-save-${tipo}-${idx}`).style.display      = 'none';
+  document.getElementById(`btn-cancel-${tipo}-${idx}`).style.display    = 'none';
+  document.getElementById(`btn-del-${tipo}-${idx}`).style.display       = 'inline-flex';
+}
+
+async function salvaModifica(tipo, idx){
+  const nome = document.getElementById(`edit-nome-${tipo}-${idx}`).value.trim();
+  const cod  = document.getElementById(`edit-cod-${tipo}-${idx}`).value.trim();
+  if(!nome||!cod){ showToast('Nome e codice obbligatori','toast-err'); return; }
+  const res = await fetch('/api/offerte/modifica',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo,index:idx,nome,codice:cod})});
+  const data = await res.json();
+  offerte = data.offerte;
+  renderOfferteSelects();
+  renderOfferteManager();
+  showToast(`✓ Offerta aggiornata`,'toast-ok');
 }
 
 function onOffertaLuce(){
@@ -663,6 +694,14 @@ function toggleCat(cat, el){
   else { categorie_gas.add(cat); el.classList.add('sel-gas'); }
 }
 
+// ─── Tipo richiesta multi-check ───────────────────────────
+function toggleTipo(fornitura, tipo, el){
+  const set = fornitura === 'luce' ? tipiLuce : tipiGas;
+  const cls = fornitura === 'luce' ? 'sel-luce' : 'sel-gas';
+  if(set.has(tipo)){ set.delete(tipo); el.classList.remove(cls); }
+  else             { set.add(tipo);    el.classList.add(cls);    }
+}
+
 // ─── Radio ────────────────────────────────────────────────
 function selR(gid, el, val){
   document.querySelectorAll(`#${gid} .rpill`).forEach(b=>b.classList.remove('sel'));
@@ -696,9 +735,6 @@ function toggleDebitore(){
 function toggleEsec(){
   const cb = document.getElementById('tog-esec');
   cb.checked = !cb.checked;
-}
-function updateAgente(){
-  document.getElementById('agente-display').textContent = document.getElementById('agente_nome').value || '—';
 }
 
 // ─── Summary / btn ────────────────────────────────────────
@@ -901,8 +937,6 @@ async function generaContratto(){
   btn.classList.add('loading'); btn.disabled=true;
 
   const payload = {
-    agente: document.getElementById('agente_nome').value,
-    proposta: document.getElementById('proposta_num').value,
     cognome:  document.getElementById('cognome').value,
     nome:     document.getElementById('nome').value,
     cf:       document.getElementById('cf').value,
@@ -925,7 +959,7 @@ async function generaContratto(){
     prov_forn:      document.getElementById('prov_forn').value,
     titolo_immobile: getR('rg-titolo'),
     vuole_luce:  vuoleLuce,
-    tipo_richiesta_luce: getR('rg-tipo-luce'),
+    tipo_richiesta_luce: [...tipiLuce],
     pod:         document.getElementById('pod').value,
     fornitore_uscente_luce: document.getElementById('fornitore_uscente_luce').value,
     consumo_kwh: document.getElementById('consumo_kwh').value,
@@ -935,7 +969,7 @@ async function generaContratto(){
     offerta_luce_codice: document.getElementById('offerta_luce_codice').value,
     data_attivazione_luce: fmtData(document.getElementById('data_att_luce').value),
     vuole_gas:   vuoleGas,
-    tipo_richiesta_gas: getR('rg-tipo-gas'),
+    tipo_richiesta_gas: [...tipiGas],
     pdr:         document.getElementById('pdr').value,
     fornitore_uscente_gas: document.getElementById('fornitore_uscente_gas').value,
     consumo_smc: document.getElementById('consumo_smc').value,
@@ -977,6 +1011,10 @@ function resetForm(){
   document.getElementById('forn-extra').style.display='none';
   document.getElementById('sepa-fields').style.display='block';
   vuoleLuce=false; vuoleGas=false;
+  tipiLuce.clear(); tipiGas.clear();
+  document.querySelectorAll('#rg-tipo-luce .cpill, #rg-tipo-gas .cpill').forEach(p=>{
+    p.classList.remove('sel-luce','sel-gas');
+  });
   categorie_gas.clear();
   document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('sel-gas'));
   ['card-luce','card-gas'].forEach(id=>document.getElementById(id).className='fcard');
@@ -987,7 +1025,6 @@ function resetForm(){
   document.querySelectorAll('.rg').forEach(rg=>{
     rg.querySelectorAll('.rpill').forEach((b,i)=>b.classList.toggle('sel',i===0));
   });
-  document.getElementById('agente-display').textContent='—';
   updateSummary();
   showToast('Form resettato','toast-info');
 }
