@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compilatore Contratti · Alperia Domestico</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  :root {
+    --bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:#d8d5cc;--border-strong:#b8b4a8;
+    --text:#1a1916;--text-mid:#5a5750;--text-soft:#8a8780;
+    --accent:#1a4d8c;--accent-light:#e8eef7;--accent-hover:#153d72;
+    --green:#1a6b3c;--green-light:#e8f5ee;--red:#a02020;--red-light:#fdf0f0;
+    --luce:#c88a10;--luce-light:#fef9ec;--gas:#1a7a6e;--gas-light:#e8f5f3;
+    --r:6px;--sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+  .header{background:var(--accent);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .hbrand{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;letter-spacing:.08em}
+  .hsub{font-size:11px;opacity:.7}
+  .hbadge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:4px;padding:3px 10px;font-size:11px;font-weight:500}
+  .nav-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:90}
+  .nav-tab{flex:1;padding:10px 6px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;color:var(--text-soft);border-bottom:2px solid transparent;transition:all .15s;user-select:none}
+  .nav-tab:hover{color:var(--text);background:var(--surface2)}
+  .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-panel{display:none}.tab-panel.active{display:block}
+  .main{max-width:860px;margin:0 auto;padding:16px 14px 80px}
+  .section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;box-shadow:var(--sh)}
+  .section-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:11px 14px;display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
+  .section-header:hover{background:#e8e7e1}
+  .sicon{width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+  .ic-blue{background:var(--accent-light);color:var(--accent)}
+  .ic-luce{background:var(--luce-light);color:var(--luce)}
+  .ic-gas{background:var(--gas-light);color:var(--gas)}
+  .ic-gray{background:var(--surface2);color:var(--text-mid);border:1px solid var(--border)}
+  .ic-green{background:var(--green-light);color:var(--green)}
+  .ic-purple{background:#f0f0f8;color:#4a4a9a}
+  .stitle{font-weight:600;font-size:13px}
+  .schev{margin-left:auto;font-size:10px;color:var(--text-soft);transition:transform .2s}
+  .section.collapsed .schev{transform:rotate(-90deg)}
+  .section.collapsed .section-body{display:none}
+  .section-body{padding:14px}
+  .g{display:grid;gap:9px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  .g4{grid-template-columns:1fr 1fr 1fr 1fr}
+  .g31{grid-template-columns:3fr 1fr}
+  .g21{grid-template-columns:2fr 1fr}
+  .s2{grid-column:span 2}.s3{grid-column:span 3}
+  @media(max-width:580px){.g2,.g3,.g4,.g31,.g21{grid-template-columns:1fr}.s2,.s3{grid-column:span 1}}
+  .field{display:flex;flex-direction:column;gap:3px}
+  .field label{font-size:11px;font-weight:500;color:var(--text-mid);letter-spacing:.03em;text-transform:uppercase}
+  .req{color:var(--red);margin-left:2px}
+  input[type=text],input[type=email],input[type=tel],input[type=date],select,textarea{
+    width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:7px 9px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--text);
+    outline:none;transition:border-color .15s;-webkit-appearance:none}
+  input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,77,140,.1)}
+  .mono{font-family:'IBM Plex Mono',monospace;font-size:12px}
+  .sep{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-soft);margin:12px 0 5px;padding-left:1px}
+  hr.div{border:none;border-top:1px solid var(--border);margin:11px 0}
+  /* Toggle */
+  .trow{display:flex;align-items:center;gap:9px;padding:6px 0;cursor:pointer}
+  .trow label{cursor:pointer;font-size:13px}
+  .toggle{position:relative;width:34px;height:19px;flex-shrink:0}
+  .toggle input{opacity:0;width:0;height:0;position:absolute}
+  .ttrack{position:absolute;inset:0;background:var(--border-strong);border-radius:10px;transition:background .2s}
+  .toggle input:checked~.ttrack{background:var(--accent)}
+  .tthumb{position:absolute;top:3px;left:3px;width:13px;height:13px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .toggle input:checked~.ttrack~.tthumb{transform:translateX(15px)}
+  /* Radio pills */
+  .rg{display:flex;gap:5px;flex-wrap:wrap}
+  .rpill{display:flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:500;color:var(--text-mid);background:var(--surface);transition:all .15s;user-select:none}
+  .rpill:hover{border-color:var(--border-strong);color:var(--text);background:var(--surface2)}
+  .rpill input{display:none}
+  /* Selezionato generico */
+  .rpill.sel{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(26,77,140,.25)}
+  /* Selezionato luce */
+  .rpill.sel.sel-luce{border-color:var(--luce);background:var(--luce);color:#fff;box-shadow:0 2px 6px rgba(200,138,16,.3)}
+  /* Selezionato gas */
+  .rpill.sel.sel-gas{border-color:var(--gas);background:var(--gas);color:#fff;box-shadow:0 2px 6px rgba(26,122,110,.3)}
+  /* Multi-check pills */
+  .cpill{display:flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:500;color:var(--text-mid);background:var(--surface);transition:all .15s;user-select:none}
+  .cpill input{display:none}
+  .cpill.sel-gas{border-color:var(--gas);background:var(--gas-light);color:var(--gas)}
+  .cpill.sel-luce{border-color:var(--luce);background:var(--luce-light);color:var(--luce)}
+  .cpill:hover{border-color:var(--border-strong);color:var(--text)}
+  /* Fornitura cards */
+  .fcards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px}
+  .fcard{border:2px solid var(--border);border-radius:var(--r);padding:13px;cursor:pointer;transition:all .15s;user-select:none}
+  .fcard:hover{border-color:var(--border-strong)}
+  .fcard.sel-luce{border-color:var(--luce);background:var(--luce-light)}
+  .fcard.sel-gas{border-color:var(--gas);background:var(--gas-light)}
+  .fcard-ico{font-size:20px;margin-bottom:5px}
+  .fcard-title{font-weight:600;font-size:13px}
+  .fcard-sub{font-size:11px;color:var(--text-soft);margin-top:1px}
+  .fcard-chk{width:17px;height:17px;border:2px solid var(--border-strong);border-radius:3px;float:right;display:flex;align-items:center;justify-content:center;font-size:10px;margin-top:-3px}
+  .fcard.sel-luce .fcard-chk{border-color:var(--luce);background:var(--luce);color:#fff}
+  .fcard.sel-gas .fcard-chk{border-color:var(--gas);background:var(--gas);color:#fff}
+  /* Bolletta upload */
+  .upload-zone{border:2px dashed var(--border);border-radius:var(--r);padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+  .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:var(--accent-light)}
+  .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .upload-ico{font-size:28px;margin-bottom:6px}
+  .upload-title{font-weight:600;font-size:13px}
+  .upload-sub{font-size:11px;color:var(--text-soft);margin-top:3px}
+  .upload-result{background:var(--green-light);border:1px solid #b8ddc8;border-radius:var(--r);padding:10px 12px;margin-top:10px;font-size:12px;display:none}
+  .upload-result.show{display:block}
+  .upload-err{background:var(--red-light);border:1px solid #e8b8b8;border-radius:var(--r);padding:10px 12px;margin-top:10px;font-size:12px;display:none}
+  .upload-err.show{display:block}
+  .upload-loading{display:none;align-items:center;gap:8px;padding:10px 0;font-size:12px;color:var(--text-mid)}
+  .upload-loading.show{display:flex}
+  /* Offerte manager */
+  .offerta-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+  .offerta-row:last-child{border-bottom:none}
+  .offerta-nome{flex:1;font-size:13px;font-weight:500}
+  .offerta-cod{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-soft);background:var(--surface2);padding:2px 7px;border-radius:3px}
+  .offerta-del{background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:3px}
+  .offerta-del:hover{background:var(--red-light);color:var(--red)}
+  .add-offerta-form{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-top:8px}
+  /* Submit bar */
+  .submit-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:50;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+  .sinfo{font-size:12px;color:var(--text-soft)}
+  .sinfo strong{color:var(--text);font-size:13px}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:none;border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:var(--accent-hover)}
+  .btn-primary:disabled{background:var(--border-strong);cursor:not-allowed}
+  .btn-ghost{background:transparent;color:var(--text-mid);border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--surface2)}
+  .btn-sm{padding:5px 12px;font-size:12px}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-green:hover{background:#155c32}
+  .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading .spinner{display:block}.loading .btn-text{display:none}
+  .spin-sm{width:13px;height:13px;border:2px solid rgba(26,77,140,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+  .toast{position:fixed;top:62px;right:14px;padding:9px 14px;border-radius:var(--r);font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:200;animation:slideIn .2s;display:none}
+  .toast.show{display:block}
+  .toast-ok{background:var(--green);color:#fff}
+  .toast-err{background:var(--red);color:#fff}
+  .toast-info{background:var(--text);color:#fff}
+  @keyframes slideIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+  .badge-luce{background:var(--luce-light);color:var(--luce);border:1px solid #e8c870;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:600}
+  .badge-gas{background:var(--gas-light);color:var(--gas);border:1px solid #b8ddd8;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:600}
+  .agente-bar{display:flex;gap:8px;align-items:center;background:var(--accent-light);border:1px solid #c5d5eb;border-radius:var(--r);padding:7px 11px;margin-bottom:14px;font-size:12px}
+  /* Validazione campi */
+  .field-valid input{border-color:var(--green)!important;box-shadow:0 0 0 3px rgba(26,107,60,.1)!important}
+  .field-invalid input{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(160,32,32,.1)!important}
+  .field-msg{font-size:11px;margin-top:3px;display:none}
+  .field-valid .field-msg{display:block;color:var(--green)}
+  .field-invalid .field-msg{display:block;color:var(--red)}
+  /* Tile categoria gas */
+  .cat-tile{border:2px solid var(--border);border-radius:var(--r);padding:12px 8px;text-align:center;cursor:pointer;transition:all .15s;user-select:none;background:var(--surface);position:relative}
+  .cat-tile:hover{border-color:var(--gas);background:var(--gas-light)}
+  .cat-tile.sel-gas{border-color:var(--gas);background:var(--gas-light)}
+  .cat-tile-ico{font-size:22px;margin-bottom:5px}
+  .cat-tile-label{font-size:11px;font-weight:600;color:var(--text-mid);line-height:1.3}
+  .cat-tile.sel-gas .cat-tile-label{color:var(--gas)}
+  .cat-tile-chk{position:absolute;top:6px;right:7px;font-size:14px;color:var(--border-strong);transition:all .15s}
+  .cat-tile.sel-gas .cat-tile-chk{color:var(--gas)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div><div class="hbrand">Compilatore Contratti</div><div class="hsub">Alperia Smart Services · <strong style="opacity:.9">Domestico</strong></div></div>
+  <div style="display:flex;gap:7px;align-items:center"><div class="hbadge" style="background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)">🏠 Domestico</div><div class="hbadge">Alperia</div></div>
+</div>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="showTab('contratto')">📄 Contratto</div>
+  <div class="nav-tab" onclick="showTab('bolletta')">📊 Leggi Bolletta</div>
+  <div class="nav-tab" onclick="showTab('offerte')">⚙️ Gestione Offerte</div>
+</div>
+
+<!-- ===================== TAB: CONTRATTO ===================== -->
+<div class="tab-panel active" id="tab-contratto">
+<div class="main">
+
+
+
+
+  <!-- Tipo fornitura -->
+  <div class="section" id="sec-fornitura">
+    <div class="section-header" onclick="toggleSec('sec-fornitura')">
+      <div class="sicon ic-gray">⚡</div><div class="stitle">Tipo Fornitura</div><div class="schev">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="fcards">
+        <div class="fcard" id="card-luce" onclick="toggleForn('luce')">
+          <div class="fcard-chk" id="chk-luce"></div>
+          <div class="fcard-ico">⚡</div>
+          <div class="fcard-title">Energia Elettrica</div>
+          <div class="fcard-sub">Luce — POD</div>
+        </div>
+        <div class="fcard" id="card-gas" onclick="toggleForn('gas')">
+          <div class="fcard-chk" id="chk-gas"></div>
+          <div class="fcard-ico">🔥</div>
+          <div class="fcard-title">Gas Naturale</div>
+          <div class="fcard-sub">Gas — PDR</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dati cliente -->
+  <div class="section" id="sec-cliente">
+    <div class="section-header" onclick="toggleSec('sec-cliente')">
+      <div class="sicon ic-blue">👤</div><div class="stitle">Dati Anagrafici Cliente</div><div class="schev">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="g g2">
+        <div class="field"><label>Cognome <span class="req">*</span></label><input type="text" id="cognome" placeholder="Rossi" oninput="updateSummary()"></div>
+        <div class="field"><label>Nome <span class="req">*</span></label><input type="text" id="nome" placeholder="Mario" oninput="updateSummary()"></div>
+      </div>
+      <div class="g g2" style="margin-top:9px">
+        <div class="field"><label>Codice Fiscale <span class="req">*</span></label><input type="text" id="cf" placeholder="RSSMRA80A01F205X" maxlength="16" class="mono" oninput="this.value=this.value.toUpperCase();validaCF(this);updateBtn()"><span class="field-msg" id="cf-msg"></span></div>
+        <div class="field"><label>Tipo Documento</label>
+          <div class="rg" id="rg-doc">
+            <label class="rpill sel" onclick="selR('rg-doc',this,'ci')"><input type="radio" value="ci" checked> C.I.</label>
+            <label class="rpill" onclick="selR('rg-doc',this,'patente')"><input type="radio" value="patente"> Patente</label>
+            <label class="rpill" onclick="selR('rg-doc',this,'passaporto')"><input type="radio" value="passaporto"> Passaporto</label>
+          </div>
+        </div>
+      </div>
+      <hr class="div"><div class="sep">Contatti</div>
+      <div class="g g2">
+        <div class="field"><label>Telefono fisso</label><input type="tel" id="telefono" placeholder="030 1234567"></div>
+        <div class="field"><label>Cellulare <span class="req">*</span></label><input type="tel" id="cellulare" placeholder="333 1234567"></div>
+        <div class="field s2"><label>E-mail <span class="req">*</span></label><input type="email" id="email" placeholder="mario.rossi@email.it"></div>
+        <div class="field s2"><label>E-mail per bollette (se diversa)</label><input type="email" id="email_bolletta" placeholder="Lascia vuoto se uguale"></div>
+      </div>
+      <hr class="div"><div class="sep">Indirizzo di Residenza</div>
+      <div class="g g31">
+        <div class="field"><label>Via / Piazza <span class="req">*</span></label><input type="text" id="indirizzo_res" placeholder="Via Roma"></div>
+        <div class="field"><label>N.</label><input type="text" id="civico_res" placeholder="10"></div>
+      </div>
+      <div class="g g3" style="margin-top:9px">
+        <div class="field"><label>Comune <span class="req">*</span></label><input type="text" id="comune_res" placeholder="Brescia"></div>
+        <div class="field"><label>CAP</label><input type="text" id="cap_res" placeholder="25100" maxlength="5" class="mono"></div>
+        <div class="field"><label>Prov.</label><input type="text" id="prov_res" placeholder="BS" maxlength="2" class="mono" oninput="this.value=this.value.toUpperCase()"></div>
+      </div>
+      <div class="trow" style="margin-top:11px" onclick="toggleFornInd()">
+        <label class="toggle"><input type="checkbox" id="tog-forn-uguale" checked><div class="ttrack"></div><div class="tthumb"></div></label>
+        <label>Indirizzo fornitura uguale alla residenza</label>
+      </div>
+      <div id="forn-extra" style="display:none;margin-top:9px">
+        <div class="sep">Indirizzo di Fornitura</div>
+        <div class="g g31">
+          <div class="field"><label>Via / Piazza</label><input type="text" id="indirizzo_forn" placeholder="Via Milano"></div>
+          <div class="field"><label>N.</label><input type="text" id="civico_forn" placeholder="5"></div>
+        </div>
+        <div class="g g3" style="margin-top:9px">
+          <div class="field"><label>Comune</label><input type="text" id="comune_forn" placeholder="Sirmione"></div>
+          <div class="field"><label>CAP</label><input type="text" id="cap_forn" placeholder="25019" maxlength="5" class="mono"></div>
+          <div class="field"><label>Prov.</label><input type="text" id="prov_forn" placeholder="BS" maxlength="2" class="mono" oninput="this.value=this.value.toUpperCase()"></div>
+        </div>
+      </div>
+      <hr class="div"><div class="sep">Titolo sull'Immobile</div>
+      <div class="rg" id="rg-titolo">
+        <label class="rpill sel" onclick="selR('rg-titolo',this,'proprieta')"><input type="radio" value="proprieta" checked> Proprietà/Usufrutto</label>
+        <label class="rpill" onclick="selR('rg-titolo',this,'locazione')"><input type="radio" value="locazione"> Locazione/Affitto</label>
+        <label class="rpill" onclick="selR('rg-titolo',this,'altro')"><input type="radio" value="altro"> Altro titolo</label>
+      </div>
+      <div class="trow" style="margin-top:10px" onclick="toggleRes()">
+        <label class="toggle"><input type="checkbox" id="tog-residente" checked><div class="ttrack"></div><div class="tthumb"></div></label>
+        <label>Residente presso l'indirizzo di fornitura</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- LUCE -->
+  <div class="section" id="sec-luce" style="display:none">
+    <div class="section-header" onclick="toggleSec('sec-luce')">
+      <div class="sicon ic-luce">⚡</div><div class="stitle">Energia Elettrica</div><div class="schev">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="sep">Tipo Richiesta <span style="font-size:10px;color:var(--text-soft);text-transform:none;letter-spacing:0;font-weight:400"> — seleziona una o più voci</span></div>
+      <div class="rg" id="rg-tipo-luce">
+        <label class="cpill" id="tl-switch"  onclick="toggleTipo('luce','switch',this)">Switch</label>
+        <label class="cpill" id="tl-subentro" onclick="toggleTipo('luce','subentro',this)">Subentro</label>
+        <label class="cpill" id="tl-voltura"  onclick="toggleTipo('luce','voltura',this)">Voltura</label>
+        <label class="cpill" id="tl-nuova"    onclick="toggleTipo('luce','nuova',this)">Nuova Attivazione</label>
+      </div>
+      <div class="g g2" style="margin-top:11px">
+        <div class="field"><label>Codice POD</label><input type="text" id="pod" placeholder="IT001E00000000" class="mono" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="field"><label>Fornitore Uscente</label><input type="text" id="fornitore_uscente_luce" placeholder="es. Enel Energia"></div>
+        <div class="field"><label>Consumo Annuo (kWh)</label><input type="text" id="consumo_kwh" placeholder="2500" class="mono"></div>
+        <div class="field"><label>Potenza Impegnata (kW)</label><input type="text" id="potenza_kw" placeholder="3" class="mono"></div>
+      </div>
+      <div class="sep" style="margin-top:12px">Tipologia Uso</div>
+      <div class="rg" id="rg-tipuso">
+        <label class="rpill sel-luce sel" onclick="selR('rg-tipuso',this,'residente')"><input type="radio" value="residente" checked> Dom. Residente</label>
+        <label class="rpill sel-luce" onclick="selR('rg-tipuso',this,'non_residente')"><input type="radio" value="non_residente"> Dom. non Residente</label>
+        <label class="rpill sel-luce" onclick="selR('rg-tipuso',this,'altri')"><input type="radio" value="altri"> Altri usi</label>
+      </div>
+      <div class="sep" style="margin-top:12px">Offerta</div>
+      <div class="g g2">
+        <div class="field"><label>Nome Offerta <span class="req">*</span></label>
+          <select id="offerta_luce" onchange="onOffertaLuce()"><option value="">— seleziona —</option></select>
+        </div>
+        <div class="field"><label>Codice</label><input type="text" id="offerta_luce_codice" class="mono" placeholder="auto"></div>
+        <div class="field"><label>Data Attivazione (opz.)</label><input type="date" id="data_att_luce"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAS -->
+  <div class="section" id="sec-gas" style="display:none">
+    <div class="section-header" onclick="toggleSec('sec-gas')">
+      <div class="sicon ic-gas">🔥</div><div class="stitle">Gas Naturale</div><div class="schev">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="sep">Tipo Richiesta <span style="font-size:10px;color:var(--text-soft);text-transform:none;letter-spacing:0;font-weight:400"> — seleziona una o più voci</span></div>
+      <div class="rg" id="rg-tipo-gas">
+        <label class="cpill" id="tg-switch"   onclick="toggleTipo('gas','switch',this)">Switch</label>
+        <label class="cpill" id="tg-subentro"  onclick="toggleTipo('gas','subentro',this)">Subentro</label>
+        <label class="cpill" id="tg-voltura"   onclick="toggleTipo('gas','voltura',this)">Voltura</label>
+        <label class="cpill" id="tg-nuova"     onclick="toggleTipo('gas','nuova',this)">Nuova Attivazione</label>
+      </div>
+      <div class="g g2" style="margin-top:11px">
+        <div class="field"><label>Codice PDR</label><input type="text" id="pdr" placeholder="10000000000" class="mono"></div>
+        <div class="field"><label>Fornitore Uscente</label><input type="text" id="fornitore_uscente_gas" placeholder="es. ENI Gas"></div>
+        <div class="field"><label>Consumo Annuo (smc)</label><input type="text" id="consumo_smc" placeholder="800" class="mono"></div>
+        <div class="field"><label>REMI</label><input type="text" id="remi" placeholder="Codice REMI" class="mono"></div>
+      </div>
+      <div class="sep" style="margin-top:12px">Categoria d'Uso <span style="font-size:10px;color:var(--text-soft);text-transform:none;letter-spacing:0;font-weight:400"> — seleziona una o più voci</span></div>
+      <div class="rg" id="cg-gas">
+        <label class="cpill" id="cp-risc" onclick="toggleCat('riscaldamento',this)">🔥 Riscaldamento</label>
+        <label class="cpill" id="cp-cott" onclick="toggleCat('cottura',this)">🍳 Cottura cibi</label>
+        <label class="cpill" id="cp-acqua" onclick="toggleCat('acqua_calda',this)">🚿 Acqua calda sanitaria</label>
+      </div>
+      <div class="sep" style="margin-top:12px">Offerta</div>
+      <div class="g g2">
+        <div class="field"><label>Nome Offerta <span class="req">*</span></label>
+          <select id="offerta_gas" onchange="onOffertaGas()"><option value="">— seleziona —</option></select>
+        </div>
+        <div class="field"><label>Codice</label><input type="text" id="offerta_gas_codice" class="mono" placeholder="auto"></div>
+        <div class="field"><label>Data Attivazione (opz.)</label><input type="date" id="data_att_gas"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEPA -->
+  <div class="section" id="sec-sepa">
+    <div class="section-header" onclick="toggleSec('sec-sepa')">
+      <div class="sicon ic-purple">🏦</div><div class="stitle">Pagamento (SEPA Direct Debit)</div><div class="schev">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="trow" onclick="toggleSepa()">
+        <label class="toggle"><input type="checkbox" id="tog-sepa" checked><div class="ttrack"></div><div class="tthumb"></div></label>
+        <label>Addebito diretto su conto corrente (SDD)</label>
+      </div>
+      <div id="sepa-fields" style="margin-top:10px">
+        <div class="trow" onclick="toggleDebitore()">
+          <label class="toggle"><input type="checkbox" id="tog-debitore" checked><div class="ttrack"></div><div class="tthumb"></div></label>
+          <label>Debitore uguale a Titolare Conto Corrente</label>
+        </div>
+        <div class="g g2" style="margin-top:8px">
+          <div class="field s2"><label>IBAN</label><input type="text" id="iban" placeholder="IT60X0542811101000000123456" class="mono" maxlength="34" oninput="this.value=this.value.toUpperCase().replace(/\s/g,'');validaIBAN(this)"><span class="field-msg" id="iban-msg"></span></div>
+          <div class="field"><label>Banca</label><input type="text" id="banca" placeholder="es. Banco BPM"></div>
+        </div>
+        <div id="titolare-diverso" style="display:none;margin-top:10px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r)">
+          <div class="sep" style="margin-top:0">Dati Titolare Conto (se diverso dal debitore)</div>
+          <div class="g g2" style="margin-top:8px">
+            <div class="field"><label>Cognome Titolare</label><input type="text" id="titolare_cognome" placeholder="Cognome"></div>
+            <div class="field"><label>Nome Titolare</label><input type="text" id="titolare_nome" placeholder="Nome"></div>
+            <div class="field s2"><label>Codice Fiscale / P.IVA Titolare</label><input type="text" id="titolare_cf" placeholder="Codice fiscale o P.IVA" class="mono" oninput="this.value=this.value.toUpperCase()"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Opzioni pagina 2 -->
+  <div class="section" id="sec-pag2">
+    <div class="section-header" onclick="toggleSec('sec-pag2')">
+      <div class="sicon ic-gray">📋</div><div class="stitle">Opzioni Contratto</div><div class="schev">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="trow" onclick="toggleEsec()">
+        <label class="toggle"><input type="checkbox" id="tog-esec"><div class="ttrack"></div><div class="tthumb"></div></label>
+        <label>Richiesta esecuzione anticipata (prima del ripensamento)</label>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /tab-contratto -->
+
+<!-- ===================== TAB: BOLLETTA ===================== -->
+<div class="tab-panel" id="tab-bolletta">
+<div class="main">
+
+  <!-- Istruzioni -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sicon ic-blue">📊</div><div class="stitle">Leggi Bolletta con Claude AI</div>
+    </div>
+    <div class="section-body">
+      <div style="background:var(--accent-light);border:1px solid #c5d5eb;border-radius:var(--r);padding:14px;margin-bottom:16px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:8px">📋 Come funziona (gratis, senza API key)</div>
+        <ol style="font-size:13px;color:var(--text-mid);padding-left:18px;line-height:2">
+          <li>Apri <strong>Claude.ai</strong> nel browser</li>
+          <li>Carica la bolletta (PDF o foto) e scrivi: <em>"Estrai i dati da questa bolletta in formato CABONA"</em></li>
+          <li>Copia il JSON che Claude ti restituisce</li>
+          <li>Incollalo qui sotto e premi <strong>Applica</strong></li>
+        </ol>
+      </div>
+
+      <div style="background:#fffbe8;border:1px solid #e8d870;border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:12px">
+        <strong>💡 Messaggio da copiare su Claude.ai:</strong><br><br>
+        <div id="prompt-copy-box" style="background:white;border:1px solid var(--border);border-radius:4px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;cursor:pointer;position:relative;word-break:break-all;overflow-wrap:break-word;white-space:pre-wrap;overflow:hidden" onclick="copiaPrompt()">
+Analizza questa bolletta italiana e restituisci SOLO un JSON valido, senza testo prima o dopo, con questi campi esatti:
+{"intestatario_cognome":"","intestatario_nome":"","codice_fiscale":"","indirizzo_fornitura":"","civico":"","comune":"","cap":"","provincia":"","pod":"","pdr":"","fornitore":"","consumo_kwh":"","consumo_smc":"","potenza_kw":"","tipo_fornitura":"","remi":""}
+Per tipo_fornitura scrivi: luce, gas, oppure entrambi. Campi non trovati: stringa vuota.
+          <div style="position:absolute;top:6px;right:8px;font-size:10px;background:var(--accent-light);color:var(--accent);padding:2px 7px;border-radius:3px;font-family:'IBM Plex Sans',sans-serif" id="copy-label">📋 copia</div>
+        </div>
+      </div>
+
+      <div class="sep">Incolla qui il JSON ricevuto da Claude</div>
+      <textarea id="json-input" rows="6" style="width:100%;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--border);border-radius:var(--r);padding:9px;resize:vertical;outline:none" placeholder='{"intestatario_cognome":"Rossi","intestatario_nome":"Mario",...}'></textarea>
+      <div id="json-error" style="color:var(--red);font-size:12px;margin-top:5px;display:none"></div>
+      <button class="btn btn-primary" style="margin-top:10px;width:100%" onclick="parsaJSON()">✓ Analizza e mostra dati estratti</button>
+
+      <div id="bolletta-preview" style="margin-top:14px;display:none">
+        <div class="sep">Dati estratti — controlla e modifica se necessario</div>
+        <div class="g g2" style="margin-top:8px" id="bolletta-fields"></div>
+        <button class="btn btn-green" style="margin-top:12px;width:100%" onclick="applicaDatiBolletta()">✓ Applica al contratto</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+  <!-- Lettura documento identità -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sicon ic-green">🪪</div><div class="stitle">Lettura Documento d'Identità / Tessera Sanitaria</div>
+    </div>
+    <div class="section-body">
+      <p style="font-size:13px;color:var(--text-mid);margin-bottom:14px">Carica la foto o scansione di carta d'identità e/o tessera sanitaria — i dati anagrafici vengono estratti e pre-compilati nel form cliente.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;min-width:0">
+        <div>
+          <div class="sep" style="margin-top:0">Prompt da copiare su Claude.ai</div>
+          <div style="background:#fffbe8;border:1px solid #e8d870;border-radius:var(--r);padding:10px;margin-top:6px;font-size:12px">
+            Carica la foto del documento e usa questo messaggio:
+            <div id="prompt-doc-box" style="background:white;border:1px solid var(--border);border-radius:4px;padding:9px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;cursor:pointer;position:relative;margin-top:8px;word-break:break-all;overflow-wrap:break-word;white-space:pre-wrap;overflow:hidden" onclick="copiaPromptDoc()">
+Analizza questo documento di identità italiano (carta d'identità e/o tessera sanitaria) e restituisci SOLO un JSON valido senza testo prima o dopo:
+{"cognome":"","nome":"","codice_fiscale":"","data_nascita":"","luogo_nascita":"","indirizzo":"","civico":"","comune":"","cap":"","provincia":"","tipo_documento":"","numero_documento":"","scadenza_documento":""}
+Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.
+              <div style="position:absolute;top:5px;right:7px;font-size:10px;background:var(--accent-light);color:var(--accent);padding:2px 6px;border-radius:3px;font-family:'IBM Plex Sans',sans-serif" id="copy-doc-label">📋 copia</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="sep" style="margin-top:0">Supporti accettati</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px;margin-top:6px;font-size:12px;color:var(--text-mid);line-height:1.8">
+            ✅ Carta d'identità (fronte/retro)<br>
+            ✅ Tessera sanitaria (codice fiscale)<br>
+            ✅ Passaporto<br>
+            ✅ Patente di guida<br>
+            <span style="font-size:11px;color:var(--text-soft)">Foto, scansione, PDF — qualsiasi formato</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sep">Incolla qui il JSON ricevuto da Claude</div>
+      <textarea id="json-doc-input" rows="5" style="width:100%;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--border);border-radius:var(--r);padding:9px;resize:vertical;outline:none" placeholder='{"cognome":"Rossi","nome":"Mario","codice_fiscale":"RSSMRA80A01F205X",...}'></textarea>
+      <div id="json-doc-error" style="color:var(--red);font-size:12px;margin-top:5px;display:none"></div>
+      <button class="btn btn-primary" style="margin-top:10px;width:100%" onclick="parsaDoc()">🪪 Analizza e mostra dati estratti</button>
+
+      <div id="doc-preview" style="margin-top:14px;display:none">
+        <div class="sep">Dati estratti — controlla e modifica se necessario</div>
+        <div class="g g2" style="margin-top:8px" id="doc-fields"></div>
+        <button class="btn btn-green" style="margin-top:12px;width:100%" onclick="applicaDatiDoc()">✓ Applica al contratto</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- ===================== TAB: OFFERTE ===================== -->
+<div class="tab-panel" id="tab-offerte">
+<div class="main">
+
+  <!-- Offerte Luce -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sicon ic-luce">⚡</div><div class="stitle">Offerte Energia Elettrica</div>
+    </div>
+    <div class="section-body">
+      <div id="lista-offerte-luce"></div>
+      <div class="add-offerta-form">
+        <div class="sep" style="margin-top:0">Aggiungi nuova offerta luce</div>
+        <div class="g g2" style="margin-top:8px">
+          <div class="field"><label>Nome offerta</label><input type="text" id="new-luce-nome" placeholder="es. Direct Energy Winter"></div>
+          <div class="field"><label>Codice</label><input type="text" id="new-luce-cod" placeholder="es. DE-WIN" class="mono"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="aggiungiOfferta('luce')">+ Aggiungi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Offerte Gas -->
+  <div class="section">
+    <div class="section-header">
+      <div class="sicon ic-gas">🔥</div><div class="stitle">Offerte Gas Naturale</div>
+    </div>
+    <div class="section-body">
+      <div id="lista-offerte-gas"></div>
+      <div class="add-offerta-form">
+        <div class="sep" style="margin-top:0">Aggiungi nuova offerta gas</div>
+        <div class="g g2" style="margin-top:8px">
+          <div class="field"><label>Nome offerta</label><input type="text" id="new-gas-nome" placeholder="es. Gas Smile Winter"></div>
+          <div class="field"><label>Codice</label><input type="text" id="new-gas-cod" placeholder="es. GSW-GN" class="mono"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="aggiungiOfferta('gas')">+ Aggiungi</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- SUBMIT BAR -->
+<div class="submit-bar" id="submit-bar">
+  <div class="sinfo" id="sinfo">Compila i dati per generare il contratto</div>
+  <div style="display:flex;gap:7px">
+    <button class="btn btn-ghost" onclick="resetForm()">↺ Reset</button>
+    <button class="btn btn-primary" id="btn-genera" onclick="generaContratto()" disabled>
+      <span class="spinner"></span>
+      <span class="btn-text">📄 Genera PDF</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ────────────────────────────────────────────────
+let vuoleLuce = false, vuoleGas = false;
+let tipiLuce = new Set();
+let tipiGas  = new Set();
+let offerte = {luce:[], gas:[]};
+let categorie_gas = new Set();
+let estrattiBolletta = null;
+
+// ─── Init ─────────────────────────────────────────────────
+loadOfferte();
+
+function loadOfferte(){
+  fetch('/api/offerte').then(r=>r.json()).then(data=>{
+    offerte = data;
+    renderOfferteSelects();
+    renderOfferteManager();
+  });
+}
+
+function renderOfferteSelects(){
+  const sl = document.getElementById('offerta_luce');
+  const sg = document.getElementById('offerta_gas');
+  const cl = sl.value, cg = sg.value;
+  sl.innerHTML = '<option value="">— seleziona —</option>';
+  sg.innerHTML = '<option value="">— seleziona —</option>';
+  offerte.luce.forEach(o => sl.innerHTML += `<option value="${o.nome}" data-codice="${o.codice}">${o.nome}</option>`);
+  offerte.gas.forEach(o  => sg.innerHTML += `<option value="${o.nome}" data-codice="${o.codice}">${o.nome}</option>`);
+  sl.value = cl; sg.value = cg;
+}
+
+function renderOfferteManager(){
+  ['luce','gas'].forEach(tipo=>{
+    const el = document.getElementById(`lista-offerte-${tipo}`);
+    if(!offerte[tipo].length){ el.innerHTML='<p style="font-size:12px;color:var(--text-soft);padding:6px 0">Nessuna offerta configurata.</p>'; return; }
+    el.innerHTML = offerte[tipo].map((o,i)=>`
+      <div class="offerta-row" id="offerta-row-${tipo}-${i}">
+        <div id="offerta-view-${tipo}-${i}" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+          <span class="offerta-nome">${o.nome}</span>
+          <span class="offerta-cod">${o.codice}</span>
+        </div>
+        <div id="offerta-edit-${tipo}-${i}" style="display:none;flex:1;gap:6px;align-items:center">
+          <input type="text" id="edit-nome-${tipo}-${i}" value="${o.nome}" style="flex:1;padding:4px 7px;font-size:12px;border:1px solid var(--accent);border-radius:4px;outline:none">
+          <input type="text" id="edit-cod-${tipo}-${i}"  value="${o.codice}" style="width:110px;padding:4px 7px;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--accent);border-radius:4px;outline:none">
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="offerta-del" id="btn-edit-${tipo}-${i}"  onclick="iniziaModifica('${tipo}',${i})"  title="Modifica" style="color:var(--accent)">✏️</button>
+          <button class="offerta-del" id="btn-save-${tipo}-${i}"  onclick="salvaModifica('${tipo}',${i})"   title="Salva"    style="display:none;color:var(--green)">✓</button>
+          <button class="offerta-del" id="btn-cancel-${tipo}-${i}" onclick="annullaModifica('${tipo}',${i})" title="Annulla"  style="display:none">✕</button>
+          <button class="offerta-del" id="btn-del-${tipo}-${i}"   onclick="eliminaOfferta('${tipo}',${i})"  title="Elimina"  style="color:var(--text-soft)">🗑</button>
+        </div>
+      </div>`).join('');
+  });
+}
+
+function iniziaModifica(tipo, idx){
+  document.getElementById(`offerta-view-${tipo}-${idx}`).style.display  = 'none';
+  document.getElementById(`offerta-edit-${tipo}-${idx}`).style.display  = 'flex';
+  document.getElementById(`btn-edit-${tipo}-${idx}`).style.display      = 'none';
+  document.getElementById(`btn-save-${tipo}-${idx}`).style.display      = 'inline-flex';
+  document.getElementById(`btn-cancel-${tipo}-${idx}`).style.display    = 'inline-flex';
+  document.getElementById(`btn-del-${tipo}-${idx}`).style.display       = 'none';
+  document.getElementById(`edit-nome-${tipo}-${idx}`).focus();
+}
+
+function annullaModifica(tipo, idx){
+  document.getElementById(`offerta-view-${tipo}-${idx}`).style.display  = 'flex';
+  document.getElementById(`offerta-edit-${tipo}-${idx}`).style.display  = 'none';
+  document.getElementById(`btn-edit-${tipo}-${idx}`).style.display      = 'inline-flex';
+  document.getElementById(`btn-save-${tipo}-${idx}`).style.display      = 'none';
+  document.getElementById(`btn-cancel-${tipo}-${idx}`).style.display    = 'none';
+  document.getElementById(`btn-del-${tipo}-${idx}`).style.display       = 'inline-flex';
+}
+
+async function salvaModifica(tipo, idx){
+  const nome = document.getElementById(`edit-nome-${tipo}-${idx}`).value.trim();
+  const cod  = document.getElementById(`edit-cod-${tipo}-${idx}`).value.trim();
+  if(!nome||!cod){ showToast('Nome e codice obbligatori','toast-err'); return; }
+  const res = await fetch('/api/offerte/modifica',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo,index:idx,nome,codice:cod})});
+  const data = await res.json();
+  offerte = data.offerte;
+  renderOfferteSelects();
+  renderOfferteManager();
+  showToast(`✓ Offerta aggiornata`,'toast-ok');
+}
+
+function onOffertaLuce(){
+  const sel = document.getElementById('offerta_luce');
+  document.getElementById('offerta_luce_codice').value = sel.options[sel.selectedIndex]?.dataset?.codice || '';
+}
+function onOffertaGas(){
+  const sel = document.getElementById('offerta_gas');
+  document.getElementById('offerta_gas_codice').value = sel.options[sel.selectedIndex]?.dataset?.codice || '';
+}
+
+async function aggiungiOfferta(tipo){
+  const nome = document.getElementById(`new-${tipo}-nome`).value.trim();
+  const cod  = document.getElementById(`new-${tipo}-cod`).value.trim();
+  if(!nome||!cod){ showToast('Inserisci nome e codice','toast-err'); return; }
+  const res = await fetch('/api/offerte/aggiungi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo,nome,codice:cod})});
+  const data = await res.json();
+  offerte = data.offerte;
+  document.getElementById(`new-${tipo}-nome`).value='';
+  document.getElementById(`new-${tipo}-cod`).value='';
+  renderOfferteSelects();
+  renderOfferteManager();
+  showToast(`Offerta "${nome}" aggiunta`,'toast-ok');
+}
+
+async function eliminaOfferta(tipo, idx){
+  if(!confirm('Eliminare questa offerta?')) return;
+  const res = await fetch('/api/offerte/elimina',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo,index:idx})});
+  const data = await res.json();
+  offerte = data.offerte;
+  renderOfferteSelects();
+  renderOfferteManager();
+  showToast('Offerta eliminata','toast-info');
+}
+
+// ─── Tabs ─────────────────────────────────────────────────
+function showTab(id){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  document.getElementById('submit-bar').style.display = id==='contratto' ? 'flex' : 'none';
+}
+
+// ─── Sections ─────────────────────────────────────────────
+function toggleSec(id){
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+// ─── Fornitura ────────────────────────────────────────────
+function toggleForn(tipo){
+  if(tipo==='luce'){
+    vuoleLuce = !vuoleLuce;
+    document.getElementById('card-luce').className = 'fcard'+(vuoleLuce?' sel-luce':'');
+    document.getElementById('chk-luce').innerHTML = vuoleLuce?'✓':'';
+    document.getElementById('sec-luce').style.display = vuoleLuce?'block':'none';
+  } else {
+    vuoleGas = !vuoleGas;
+    document.getElementById('card-gas').className = 'fcard'+(vuoleGas?' sel-gas':'');
+    document.getElementById('chk-gas').innerHTML = vuoleGas?'✓':'';
+    document.getElementById('sec-gas').style.display = vuoleGas?'block':'none';
+  }
+  updateSummary(); updateBtn();
+}
+
+// ─── Categorie gas multi-check ────────────────────────────
+function toggleCat(cat, el){
+  if(categorie_gas.has(cat)){ categorie_gas.delete(cat); el.classList.remove('sel-gas'); }
+  else { categorie_gas.add(cat); el.classList.add('sel-gas'); }
+}
+
+// ─── Tipo richiesta multi-check ───────────────────────────
+function toggleTipo(fornitura, tipo, el){
+  const set = fornitura === 'luce' ? tipiLuce : tipiGas;
+  const cls = fornitura === 'luce' ? 'sel-luce' : 'sel-gas';
+  if(set.has(tipo)){ set.delete(tipo); el.classList.remove(cls); }
+  else             { set.add(tipo);    el.classList.add(cls);    }
+}
+
+// ─── Radio ────────────────────────────────────────────────
+function selR(gid, el, val){
+  document.querySelectorAll(`#${gid} .rpill`).forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function getR(gid){
+  const s = document.querySelector(`#${gid} .rpill.sel input`);
+  return s ? s.value : null;
+}
+
+// ─── Toggles ──────────────────────────────────────────────
+function toggleFornInd(){
+  const cb = document.getElementById('tog-forn-uguale');
+  cb.checked = !cb.checked;
+  document.getElementById('forn-extra').style.display = cb.checked?'none':'block';
+}
+function toggleRes(){
+  const cb = document.getElementById('tog-residente');
+  cb.checked = !cb.checked;
+}
+function toggleSepa(){
+  const cb = document.getElementById('tog-sepa');
+  cb.checked = !cb.checked;
+  document.getElementById('sepa-fields').style.display = cb.checked?'block':'none';
+}
+function toggleDebitore(){
+  const cb = document.getElementById('tog-debitore');
+  cb.checked = !cb.checked;
+  document.getElementById('titolare-diverso').style.display = cb.checked ? 'none' : 'block';
+}
+function toggleEsec(){
+  const cb = document.getElementById('tog-esec');
+  cb.checked = !cb.checked;
+}
+
+// ─── Summary / btn ────────────────────────────────────────
+function updateSummary(){
+  const c = document.getElementById('cognome').value;
+  const n = document.getElementById('nome').value;
+  let parts=[];
+  if(c||n) parts.push(`${c} ${n}`.trim());
+  if(vuoleLuce) parts.push('<span class="badge-luce">⚡ Luce</span>');
+  if(vuoleGas)  parts.push('<span class="badge-gas">🔥 Gas</span>');
+  const el = document.getElementById('sinfo');
+  el.innerHTML = parts.length ? parts.join(' · ') : 'Compila i dati per generare il contratto';
+  updateBtn();
+}
+function updateBtn(){
+  const ok = document.getElementById('cognome').value &&
+             document.getElementById('nome').value &&
+             document.getElementById('cf').value.length===16 &&
+             (vuoleLuce||vuoleGas);
+  document.getElementById('btn-genera').disabled = !ok;
+}
+document.querySelectorAll('input,select').forEach(el=>{
+  el.addEventListener('input',updateSummary);
+  el.addEventListener('change',updateSummary);
+});
+
+// ─── Bolletta: incolla JSON da Claude.ai ─────────────────
+function copiaPrompt(){
+  const testo = `Analizza questa bolletta italiana e restituisci SOLO un JSON valido, senza testo prima o dopo, con questi campi esatti:
+{"intestatario_cognome":"","intestatario_nome":"","codice_fiscale":"","indirizzo_fornitura":"","civico":"","comune":"","cap":"","provincia":"","pod":"","pdr":"","fornitore":"","consumo_kwh":"","consumo_smc":"","potenza_kw":"","tipo_fornitura":"","remi":""}
+Per tipo_fornitura scrivi: luce, gas, oppure entrambi. Campi non trovati: stringa vuota.`;
+  navigator.clipboard.writeText(testo).then(()=>{
+    const lbl = document.getElementById('copy-label');
+    lbl.textContent = '✓ copiato!';
+    lbl.style.background = 'var(--green-light)';
+    lbl.style.color = 'var(--green)';
+    setTimeout(()=>{ lbl.textContent='📋 copia'; lbl.style.background=''; lbl.style.color=''; }, 2000);
+  });
+}
+
+function parsaJSON(){
+  const raw = document.getElementById('json-input').value.trim();
+  const errEl = document.getElementById('json-error');
+  errEl.style.display = 'none';
+  if(!raw){ errEl.textContent='Incolla prima il JSON ricevuto da Claude.'; errEl.style.display='block'; return; }
+  try {
+    // Pulisci eventuali backtick markdown
+    let testo = raw;
+    if(testo.includes('```')){ 
+      const parts = testo.split('```');
+      for(let p of parts){ p=p.trim(); if(p.startsWith('json')) p=p.slice(4).trim(); if(p.startsWith('{')){ testo=p; break; } }
+    }
+    const dati = JSON.parse(testo);
+    estrattiBolletta = dati;
+    renderBollettaPreview(dati);
+    showToast('✓ Dati letti correttamente!','toast-ok');
+  } catch(e){
+    errEl.textContent = 'JSON non valido: ' + e.message + '. Copia solo il testo JSON da Claude, senza altro.';
+    errEl.style.display = 'block';
+  }
+}
+
+function renderBollettaPreview(d){
+  const campi = [
+    {id:'b_cognome',  label:'Cognome',          val:d.intestatario_cognome},
+    {id:'b_nome',     label:'Nome',              val:d.intestatario_nome},
+    {id:'b_cf',       label:'Codice Fiscale',    val:d.codice_fiscale},
+    {id:'b_indirizzo',label:'Via/Piazza',        val:d.indirizzo_fornitura},
+    {id:'b_civico',   label:'Civico',            val:d.civico},
+    {id:'b_comune',   label:'Comune',            val:d.comune},
+    {id:'b_cap',      label:'CAP',               val:d.cap},
+    {id:'b_prov',     label:'Prov.',             val:d.provincia},
+    {id:'b_fornitore',label:'Fornitore attuale', val:d.fornitore},
+    {id:'b_pod',      label:'Codice POD',        val:d.pod},
+    {id:'b_pdr',      label:'Codice PDR',        val:d.pdr},
+    {id:'b_kwh',      label:'Consumo kWh/anno',  val:d.consumo_kwh},
+    {id:'b_smc',      label:'Consumo smc/anno',  val:d.consumo_smc},
+    {id:'b_kw',       label:'Potenza kW',        val:d.potenza_kw},
+    {id:'b_remi',     label:'REMI',              val:d.remi},
+  ];
+  const container = document.getElementById('bolletta-fields');
+  container.innerHTML = campi.map(c=>c.val?`
+    <div class="field">
+      <label>${c.label}</label>
+      <input type="text" id="${c.id}" value="${c.val}">
+    </div>`:'').join('');
+  document.getElementById('bolletta-preview').style.display = 'block';
+}
+
+function applicaDatiBolletta(){
+  const g = id => { const el=document.getElementById(id); return el?el.value:''; };
+  if(g('b_cognome')) document.getElementById('cognome').value = g('b_cognome');
+  if(g('b_nome'))    document.getElementById('nome').value    = g('b_nome');
+  if(g('b_cf'))      document.getElementById('cf').value      = g('b_cf').toUpperCase();
+  if(g('b_indirizzo')) document.getElementById('indirizzo_res').value = g('b_indirizzo');
+  if(g('b_civico'))  document.getElementById('civico_res').value  = g('b_civico');
+  if(g('b_comune'))  document.getElementById('comune_res').value  = g('b_comune');
+  if(g('b_cap'))     document.getElementById('cap_res').value     = g('b_cap');
+  if(g('b_prov'))    document.getElementById('prov_res').value    = g('b_prov').toUpperCase();
+  if(g('b_pod'))     document.getElementById('pod').value         = g('b_pod').toUpperCase();
+  if(g('b_pdr'))     document.getElementById('pdr').value         = g('b_pdr');
+  if(g('b_kwh'))     document.getElementById('consumo_kwh').value = g('b_kwh');
+  if(g('b_smc'))     document.getElementById('consumo_smc').value = g('b_smc');
+  if(g('b_kw'))      document.getElementById('potenza_kw').value  = g('b_kw');
+  if(g('b_remi'))    document.getElementById('remi').value        = g('b_remi');
+  if(g('b_fornitore')){
+    document.getElementById('fornitore_uscente_luce').value = g('b_fornitore');
+    document.getElementById('fornitore_uscente_gas').value  = g('b_fornitore');
+  }
+  // Attiva la fornitura rilevante
+  if(estrattiBolletta){
+    const tipo = estrattiBolletta.tipo_fornitura||'';
+    if((tipo==='luce'||tipo==='entrambi') && !vuoleLuce) toggleForn('luce');
+    if((tipo==='gas'||tipo==='entrambi')  && !vuoleGas)  toggleForn('gas');
+  }
+  showTab_direct('contratto');
+  showToast('✓ Dati applicati al contratto!','toast-ok');
+  updateSummary();
+}
+
+function showTab_direct(id){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.querySelectorAll('.nav-tab')[0].classList.add('active');
+  document.getElementById('submit-bar').style.display='flex';
+}
+
+// ─── Validazione CF ──────────────────────────────────────
+function validaCF(input){
+  const cf = input.value.toUpperCase().trim();
+  const field = input.closest('.field');
+  const msg = document.getElementById('cf-msg');
+  if(cf.length === 0){ field.className='field'; return; }
+  if(cf.length < 16){ field.className='field'; msg.textContent=''; return; }
+
+  // Formato base
+  const re = /^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST]{1}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{3}[A-Z]{1}$/;
+  if(!re.test(cf)){ setFieldState(field, msg, false, '✗ Formato non valido'); return; }
+
+  // Calcolo carattere di controllo
+  const odd  = [1,0,5,7,9,13,15,17,19,21,2,4,18,20,11,3,6,8,12,14,16,10,22,25,24,23];
+  const even = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25];
+  let s = 0;
+  for(let i = 0; i < 15; i++){
+    const c = cf.charCodeAt(i);
+    const v = (c >= 48 && c <= 57) ? c-48 : c-65;
+    s += (i % 2 === 0) ? odd[v] : even[v];
+  }
+  const expected = String.fromCharCode(65 + (s % 26));
+  if(cf[15] !== expected){ setFieldState(field, msg, false, '✗ Carattere di controllo errato'); return; }
+  setFieldState(field, msg, true, '✓ Codice fiscale valido');
+}
+
+// ─── Validazione IBAN ─────────────────────────────────────
+function validaIBAN(input){
+  const raw = input.value.replace(/\s/g,'').toUpperCase();
+  const field = input.closest('.field');
+  const msg = document.getElementById('iban-msg');
+  if(raw.length === 0){ field.className='field'; return; }
+
+  // Lunghezza IBAN italiana = 27
+  if(raw.length < 4){ field.className='field'; msg.textContent=''; return; }
+  if(!raw.startsWith('IT')){ setFieldState(field, msg, false, '✗ IBAN deve iniziare con IT'); return; }
+  if(raw.length !== 27){ setFieldState(field, msg, false, `✗ IBAN IT deve avere 27 caratteri (${raw.length}/27)`); return; }
+
+  // Algoritmo MOD97
+  const rearranged = raw.slice(4) + raw.slice(0,4);
+  const numeric = rearranged.split('').map(c => {
+    const code = c.charCodeAt(0);
+    return code >= 65 ? (code - 55).toString() : c;
+  }).join('');
+  let remainder = 0;
+  for(let i = 0; i < numeric.length; i++){
+    remainder = (remainder * 10 + parseInt(numeric[i])) % 97;
+  }
+  if(remainder !== 1){ setFieldState(field, msg, false, '✗ IBAN non valido (checksum errato)'); return; }
+  // Formatta con spazi per leggibilità
+  const formatted = raw.match(/.{1,4}/g).join(' ');
+  setFieldState(field, msg, true, '✓ IBAN valido — ' + formatted);
+}
+
+function setFieldState(field, msg, valid, text){
+  field.className = 'field ' + (valid ? 'field-valid' : 'field-invalid');
+  msg.textContent = text;
+}
+
+// ─── Utilità data ─────────────────────────────────────────
+function fmtData(val){
+  // Converte YYYY-MM-DD → GG/MM/AAAA
+  if(!val) return '';
+  const p = val.split('-');
+  if(p.length===3) return p[2]+'/'+p[1]+'/'+p[0];
+  return val;
+}
+
+// ─── Genera PDF ───────────────────────────────────────────
+async function generaContratto(){
+  const btn = document.getElementById('btn-genera');
+  btn.classList.add('loading'); btn.disabled=true;
+
+  const payload = {
+    cognome:  document.getElementById('cognome').value,
+    nome:     document.getElementById('nome').value,
+    cf:       document.getElementById('cf').value,
+    residente: document.getElementById('tog-residente').checked,
+    tipo_doc: getR('rg-doc'),
+    telefono: document.getElementById('telefono').value,
+    cellulare:document.getElementById('cellulare').value,
+    email:    document.getElementById('email').value,
+    email_bolletta: document.getElementById('email_bolletta').value,
+    indirizzo_res: document.getElementById('indirizzo_res').value,
+    civico_res:    document.getElementById('civico_res').value,
+    comune_res:    document.getElementById('comune_res').value,
+    cap_res:       document.getElementById('cap_res').value,
+    prov_res:      document.getElementById('prov_res').value,
+    fornitura_uguale_residenza: document.getElementById('tog-forn-uguale').checked,
+    indirizzo_forn: document.getElementById('indirizzo_forn').value,
+    civico_forn:    document.getElementById('civico_forn').value,
+    comune_forn:    document.getElementById('comune_forn').value,
+    cap_forn:       document.getElementById('cap_forn').value,
+    prov_forn:      document.getElementById('prov_forn').value,
+    titolo_immobile: getR('rg-titolo'),
+    vuole_luce:  vuoleLuce,
+    tipo_richiesta_luce: [...tipiLuce],
+    pod:         document.getElementById('pod').value,
+    fornitore_uscente_luce: document.getElementById('fornitore_uscente_luce').value,
+    consumo_kwh: document.getElementById('consumo_kwh').value,
+    potenza_kw:  document.getElementById('potenza_kw').value,
+    tipologia_uso: getR('rg-tipuso'),
+    offerta_luce_nome:   document.getElementById('offerta_luce').value,
+    offerta_luce_codice: document.getElementById('offerta_luce_codice').value,
+    data_attivazione_luce: fmtData(document.getElementById('data_att_luce').value),
+    vuole_gas:   vuoleGas,
+    tipo_richiesta_gas: [...tipiGas],
+    pdr:         document.getElementById('pdr').value,
+    fornitore_uscente_gas: document.getElementById('fornitore_uscente_gas').value,
+    consumo_smc: document.getElementById('consumo_smc').value,
+    remi:        document.getElementById('remi').value,
+    categorie_gas: [...categorie_gas],
+    offerta_gas_nome:   document.getElementById('offerta_gas').value,
+    offerta_gas_codice: document.getElementById('offerta_gas_codice').value,
+    data_attivazione_gas: fmtData(document.getElementById('data_att_gas').value),
+    iban:  document.getElementById('tog-sepa').checked ? document.getElementById('iban').value : '',
+    debitore_uguale_titolare: document.getElementById('tog-debitore').checked,
+    titolare_cognome: document.getElementById('titolare_cognome').value,
+    titolare_nome:    document.getElementById('titolare_nome').value,
+    titolare_cf:      document.getElementById('titolare_cf').value,
+    banca: document.getElementById('banca').value,
+    esecuzione_anticipata: document.getElementById('tog-esec').checked,
+  };
+
+  try {
+    const res = await fetch('/api/compila',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error('Errore nella generazione');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=`Contratto_Alperia_${payload.cognome}_${payload.nome}.pdf`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('✓ PDF scaricato!','toast-ok');
+  } catch(e){ showToast('Errore: '+e.message,'toast-err'); }
+  finally { btn.classList.remove('loading'); updateBtn(); }
+}
+
+// ─── Reset ────────────────────────────────────────────────
+function resetForm(){
+  if(!confirm('Cancellare tutti i dati?')) return;
+  document.querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=date]').forEach(el=>el.value='');
+  document.querySelectorAll('select').forEach(el=>el.selectedIndex=0);
+  ['tog-forn-uguale','tog-residente','tog-sepa','tog-debitore'].forEach(id=>document.getElementById(id).checked=true);
+  document.getElementById('titolare-diverso').style.display='none';
+  document.getElementById('tog-esec').checked=false;
+  document.getElementById('forn-extra').style.display='none';
+  document.getElementById('sepa-fields').style.display='block';
+  vuoleLuce=false; vuoleGas=false;
+  tipiLuce.clear(); tipiGas.clear();
+  document.querySelectorAll('#rg-tipo-luce .cpill, #rg-tipo-gas .cpill').forEach(p=>{
+    p.classList.remove('sel-luce','sel-gas');
+  });
+  categorie_gas.clear();
+  document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('sel-gas'));
+  ['card-luce','card-gas'].forEach(id=>document.getElementById(id).className='fcard');
+  document.getElementById('chk-luce').innerHTML='';
+  document.getElementById('chk-gas').innerHTML='';
+  document.getElementById('sec-luce').style.display='none';
+  document.getElementById('sec-gas').style.display='none';
+  document.querySelectorAll('.rg').forEach(rg=>{
+    rg.querySelectorAll('.rpill').forEach((b,i)=>b.classList.toggle('sel',i===0));
+  });
+  updateSummary();
+  showToast('Form resettato','toast-info');
+}
+
+// ─── Toast ────────────────────────────────────────────────
+function showToast(msg, cls='toast-info'){
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+cls;
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ─── Documento identità ──────────────────────────────────
+function copiaPromptDoc(){
+  const testo = `Analizza questo documento di identità italiano (carta d'identità e/o tessera sanitaria) e restituisci SOLO un JSON valido senza testo prima o dopo:
+{"cognome":"","nome":"","codice_fiscale":"","data_nascita":"","luogo_nascita":"","indirizzo":"","civico":"","comune":"","cap":"","provincia":"","tipo_documento":"","numero_documento":"","scadenza_documento":""}
+Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.`;
+  navigator.clipboard.writeText(testo).then(()=>{
+    const lbl = document.getElementById('copy-doc-label');
+    lbl.textContent = '✓ copiato!';
+    lbl.style.background = 'var(--green-light)';
+    lbl.style.color = 'var(--green)';
+    setTimeout(()=>{ lbl.textContent='📋 copia'; lbl.style.background=''; lbl.style.color=''; }, 2000);
+  });
+}
+
+let estrattiDoc = null;
+
+function parsaDoc(){
+  const raw = document.getElementById('json-doc-input').value.trim();
+  const errEl = document.getElementById('json-doc-error');
+  errEl.style.display = 'none';
+  if(!raw){ errEl.textContent='Incolla prima il JSON ricevuto da Claude.'; errEl.style.display='block'; return; }
+  try {
+    let testo = raw;
+    if(testo.includes('```')){
+      const parts = testo.split('```');
+      for(let p of parts){ p=p.trim(); if(p.startsWith('json')) p=p.slice(4).trim(); if(p.startsWith('{')){ testo=p; break; } }
+    }
+    const dati = JSON.parse(testo);
+    estrattiDoc = dati;
+    renderDocPreview(dati);
+    showToast('✓ Documento letto!','toast-ok');
+  } catch(e){
+    errEl.textContent = 'JSON non valido: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function renderDocPreview(d){
+  const campi = [
+    {id:'d_cognome',   label:'Cognome',            val:d.cognome},
+    {id:'d_nome',      label:'Nome',               val:d.nome},
+    {id:'d_cf',        label:'Codice Fiscale',      val:d.codice_fiscale},
+    {id:'d_nascita',   label:'Data di nascita',     val:d.data_nascita},
+    {id:'d_luogo',     label:'Luogo di nascita',    val:d.luogo_nascita},
+    {id:'d_indirizzo', label:'Indirizzo residenza', val:d.indirizzo},
+    {id:'d_civico',    label:'Civico',              val:d.civico},
+    {id:'d_comune',    label:'Comune',              val:d.comune},
+    {id:'d_cap',       label:'CAP',                 val:d.cap},
+    {id:'d_prov',      label:'Provincia',           val:d.provincia},
+    {id:'d_tipodoc',   label:'Tipo documento',      val:d.tipo_documento},
+    {id:'d_numdoc',    label:'N° documento',        val:d.numero_documento},
+    {id:'d_scadenza',  label:'Scadenza documento',  val:d.scadenza_documento},
+  ];
+  const container = document.getElementById('doc-fields');
+  container.innerHTML = campi.map(c => c.val ? `
+    <div class="field">
+      <label>${c.label}</label>
+      <input type="text" id="${c.id}" value="${c.val}">
+    </div>` : '').join('');
+  document.getElementById('doc-preview').style.display = 'block';
+}
+
+function applicaDatiDoc(){
+  const g = id => { const el=document.getElementById(id); return el?el.value:''; };
+  if(g('d_cognome'))   document.getElementById('cognome').value        = g('d_cognome');
+  if(g('d_nome'))      document.getElementById('nome').value           = g('d_nome');
+  if(g('d_cf')){
+    document.getElementById('cf').value = g('d_cf').toUpperCase();
+    validaCF(document.getElementById('cf'));
+  }
+  if(g('d_indirizzo')) document.getElementById('indirizzo_res').value  = g('d_indirizzo');
+  if(g('d_civico'))    document.getElementById('civico_res').value     = g('d_civico');
+  if(g('d_comune'))    document.getElementById('comune_res').value     = g('d_comune');
+  if(g('d_cap'))       document.getElementById('cap_res').value        = g('d_cap');
+  if(g('d_prov'))      document.getElementById('prov_res').value       = g('d_prov').toUpperCase();
+  showTab_direct('contratto');
+  showToast('✓ Dati anagrafici applicati!','toast-ok');
+  updateSummary();
+}
+
+// Init submit bar display
+document.getElementById('submit-bar').style.display='flex';
+</script>
+</body>
+</html>
