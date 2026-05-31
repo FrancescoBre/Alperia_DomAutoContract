@@ -166,13 +166,13 @@
 
 <div class="header">
   <div><div class="hbrand">Compilatore Contratti</div><div class="hsub">Alperia Smart Services · <strong style="opacity:.9">Domestico</strong></div></div>
-  <div style="display:flex;gap:7px;align-items:center"><div class="hbadge" style="background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)">🏠 Domestico</div><div class="hbadge">Alperia</div></div>
+  <div style="display:flex;gap:7px;align-items:center"><div class="hbadge" style="background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)">Domestico</div><div class="hbadge">Alperia</div></div>
 </div>
 
 <div class="nav-tabs">
-  <div class="nav-tab active" onclick="showTab('contratto')">📄 Contratto</div>
-  <div class="nav-tab" onclick="showTab('bolletta')">📊 Leggi Bolletta</div>
-  <div class="nav-tab" onclick="showTab('offerte')">⚙️ Gestione Offerte</div>
+  <div class="nav-tab active" onclick="showTab('contratto')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;vertical-align:-1px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Contratto</div>
+  <div class="nav-tab" onclick="showTab('bolletta')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;vertical-align:-1px"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Leggi Bolletta</div>
+  <div class="nav-tab" onclick="showTab('offerte')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;vertical-align:-1px"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>Gestione Offerte</div>
 </div>
 
 <!-- ===================== TAB: CONTRATTO ===================== -->
@@ -185,19 +185,19 @@
   <!-- Tipo fornitura -->
   <div class="section" id="sec-fornitura">
     <div class="section-header" onclick="toggleSec('sec-fornitura')">
-      <div class="sicon ic-gray">⚡</div><div class="stitle">Tipo Fornitura</div><div class="schev">▼</div>
+      <div class="sicon ic-gray"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="stitle">Tipo Fornitura</div><div class="schev">▼</div>
     </div>
     <div class="section-body">
       <div class="fcards">
         <div class="fcard" id="card-luce" onclick="toggleForn('luce')">
           <div class="fcard-chk" id="chk-luce"></div>
-          <div class="fcard-ico">⚡</div>
+          <div class="fcard-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
           <div class="fcard-title">Energia Elettrica</div>
           <div class="fcard-sub">Luce — POD</div>
         </div>
         <div class="fcard" id="card-gas" onclick="toggleForn('gas')">
           <div class="fcard-chk" id="chk-gas"></div>
-          <div class="fcard-ico">🔥</div>
+          <div class="fcard-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
           <div class="fcard-title">Gas Naturale</div>
           <div class="fcard-sub">Gas — PDR</div>
         </div>
@@ -208,7 +208,7 @@
   <!-- Dati cliente -->
   <div class="section" id="sec-cliente">
     <div class="section-header" onclick="toggleSec('sec-cliente')">
-      <div class="sicon ic-blue">👤</div><div class="stitle">Dati Anagrafici Cliente</div><div class="schev">▼</div>
+      <div class="sicon ic-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="stitle">Dati Anagrafici Cliente</div><div class="schev">▼</div>
     </div>
     <div class="section-body">
       <div class="g g2">
@@ -274,7 +274,7 @@
   <!-- LUCE -->
   <div class="section" id="sec-luce" style="display:none">
     <div class="section-header" onclick="toggleSec('sec-luce')">
-      <div class="sicon ic-luce">⚡</div><div class="stitle">Energia Elettrica</div><div class="schev">▼</div>
+      <div class="sicon ic-luce"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="stitle">Energia Elettrica</div><div class="schev">▼</div>
     </div>
     <div class="section-body">
       <div class="sep">Tipo Richiesta <span style="font-size:10px;color:var(--text-soft);text-transform:none;letter-spacing:0;font-weight:400"> — seleziona una o più voci</span></div>
@@ -310,7 +310,7 @@
   <!-- GAS -->
   <div class="section" id="sec-gas" style="display:none">
     <div class="section-header" onclick="toggleSec('sec-gas')">
-      <div class="sicon ic-gas">🔥</div><div class="stitle">Gas Naturale</div><div class="schev">▼</div>
+      <div class="sicon ic-gas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div><div class="stitle">Gas Naturale</div><div class="schev">▼</div>
     </div>
     <div class="section-body">
       <div class="sep">Tipo Richiesta <span style="font-size:10px;color:var(--text-soft);text-transform:none;letter-spacing:0;font-weight:400"> — seleziona una o più voci</span></div>
@@ -328,9 +328,9 @@
       </div>
       <div class="sep" style="margin-top:12px">Categoria d'Uso <span style="font-size:10px;color:var(--text-soft);text-transform:none;letter-spacing:0;font-weight:400"> — seleziona una o più voci</span></div>
       <div class="rg" id="cg-gas">
-        <label class="cpill" id="cp-risc" onclick="toggleCat('riscaldamento',this)">🔥 Riscaldamento</label>
-        <label class="cpill" id="cp-cott" onclick="toggleCat('cottura',this)">🍳 Cottura cibi</label>
-        <label class="cpill" id="cp-acqua" onclick="toggleCat('acqua_calda',this)">🚿 Acqua calda sanitaria</label>
+        <label class="cpill" id="cp-risc" onclick="toggleCat('riscaldamento',this)">Riscaldamento</label>
+        <label class="cpill" id="cp-cott" onclick="toggleCat('cottura',this)">Cottura cibi</label>
+        <label class="cpill" id="cp-acqua" onclick="toggleCat('acqua_calda',this)">Acqua calda sanitaria</label>
       </div>
       <div class="sep" style="margin-top:12px">Offerta</div>
       <div class="g g2">
@@ -346,7 +346,7 @@
   <!-- SEPA -->
   <div class="section" id="sec-sepa">
     <div class="section-header" onclick="toggleSec('sec-sepa')">
-      <div class="sicon ic-purple">🏦</div><div class="stitle">Pagamento (SEPA Direct Debit)</div><div class="schev">▼</div>
+      <div class="sicon ic-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="stitle">Pagamento (SEPA Direct Debit)</div><div class="schev">▼</div>
     </div>
     <div class="section-body">
       <div class="trow" onclick="toggleSepa()">
@@ -377,7 +377,7 @@
   <!-- Opzioni pagina 2 -->
   <div class="section" id="sec-pag2">
     <div class="section-header" onclick="toggleSec('sec-pag2')">
-      <div class="sicon ic-gray">📋</div><div class="stitle">Opzioni Contratto</div><div class="schev">▼</div>
+      <div class="sicon ic-gray"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg></div><div class="stitle">Opzioni Contratto</div><div class="schev">▼</div>
     </div>
     <div class="section-body">
       <div class="trow" onclick="toggleEsec()">
@@ -397,11 +397,11 @@
   <!-- Istruzioni -->
   <div class="section">
     <div class="section-header">
-      <div class="sicon ic-blue">📊</div><div class="stitle">Leggi Bolletta con Claude AI</div>
+      <div class="sicon ic-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="8" x2="13" y2="8"/><line x1="7" y1="16" x2="11" y2="16"/></svg></div><div class="stitle">Leggi Bolletta con Claude AI</div>
     </div>
     <div class="section-body">
       <div style="background:var(--accent-light);border:1px solid #c5d5eb;border-radius:var(--r);padding:14px;margin-bottom:16px">
-        <div style="font-weight:600;font-size:13px;margin-bottom:8px">📋 Come funziona (gratis, senza API key)</div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:8px">Come funziona (gratis, senza API key)</div>
         <ol style="font-size:13px;color:var(--text-mid);padding-left:18px;line-height:2">
           <li>Apri <strong>Claude.ai</strong> nel browser</li>
           <li>Carica la bolletta (PDF o foto) e scrivi: <em>"Estrai i dati da questa bolletta in formato CABONA"</em></li>
@@ -411,7 +411,7 @@
       </div>
 
       <div style="background:#fffbe8;border:1px solid #e8d870;border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:12px">
-        <strong>💡 Messaggio da copiare su Claude.ai:</strong><br><br>
+        <strong>→ Messaggio da copiare su Claude.ai:</strong><br><br>
         <div id="prompt-copy-box" style="background:white;border:1px solid var(--border);border-radius:4px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;cursor:pointer;position:relative;word-break:break-all;overflow-wrap:break-word;white-space:pre-wrap;overflow:hidden" onclick="copiaPrompt()">
 Analizza questa bolletta italiana e restituisci SOLO un JSON valido, senza testo prima o dopo, con questi campi esatti:
 {"intestatario_cognome":"","intestatario_nome":"","codice_fiscale":"","indirizzo_fornitura":"","civico":"","comune":"","cap":"","provincia":"","pod":"","pdr":"","fornitore":"","consumo_kwh":"","consumo_smc":"","potenza_kw":"","tipo_fornitura":"","remi":""}
@@ -438,40 +438,23 @@ Per tipo_fornitura scrivi: luce, gas, oppure entrambi. Campi non trovati: string
   <!-- Lettura documento identità -->
   <div class="section">
     <div class="section-header">
-      <div class="sicon ic-green">🪪</div><div class="stitle">Lettura Documento d'Identità / Tessera Sanitaria</div>
+      <div class="sicon ic-green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 9h4"/><path d="M14 13h3"/></svg></div><div class="stitle">Lettura Documento d'Identità / Tessera Sanitaria</div>
     </div>
     <div class="section-body">
       <p style="font-size:13px;color:var(--text-mid);margin-bottom:14px">Carica la foto o scansione di carta d'identità e/o tessera sanitaria — i dati anagrafici vengono estratti e pre-compilati nel form cliente.</p>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;min-width:0">
-        <div>
-          <div class="sep" style="margin-top:0">Prompt da copiare su Claude.ai</div>
-          <div style="background:#fffbe8;border:1px solid #e8d870;border-radius:var(--r);padding:10px;margin-top:6px;font-size:12px">
-            Carica la foto del documento e usa questo messaggio:
-            <div id="prompt-doc-box" style="background:white;border:1px solid var(--border);border-radius:4px;padding:9px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;cursor:pointer;position:relative;margin-top:8px;word-break:break-all;overflow-wrap:break-word;white-space:pre-wrap;overflow:hidden" onclick="copiaPromptDoc()">
-Analizza questo documento di identità italiano (carta d'identità e/o tessera sanitaria) e restituisci SOLO un JSON valido senza testo prima o dopo:
+      <div style="background:#fffbe8;border:1px solid #e8d870;border-radius:var(--r);padding:12px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:600;color:#7a6010;letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px">Prompt da copiare su Claude.ai</div>
+        <div id="prompt-doc-box" style="background:white;border:1px solid #e8d870;border-radius:4px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;cursor:pointer;position:relative;word-break:break-all;overflow-wrap:break-word;white-space:pre-wrap;overflow:hidden" onclick="copiaPromptDoc()">Analizza questo documento di identità italiano (carta d'identità e/o tessera sanitaria) e restituisci SOLO un JSON valido senza testo prima o dopo:
 {"cognome":"","nome":"","codice_fiscale":"","data_nascita":"","luogo_nascita":"","indirizzo":"","civico":"","comune":"","cap":"","provincia":"","tipo_documento":"","numero_documento":"","scadenza_documento":""}
-Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.
-              <div style="position:absolute;top:5px;right:7px;font-size:10px;background:var(--accent-light);color:var(--accent);padding:2px 6px;border-radius:3px;font-family:'IBM Plex Sans',sans-serif" id="copy-doc-label">📋 copia</div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div class="sep" style="margin-top:0">Supporti accettati</div>
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px;margin-top:6px;font-size:12px;color:var(--text-mid);line-height:1.8">
-            ✅ Carta d'identità (fronte/retro)<br>
-            ✅ Tessera sanitaria (codice fiscale)<br>
-            ✅ Passaporto<br>
-            ✅ Patente di guida<br>
-            <span style="font-size:11px;color:var(--text-soft)">Foto, scansione, PDF — qualsiasi formato</span>
-          </div>
-        </div>
+Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.<div style="position:absolute;top:6px;right:8px;font-size:10px;background:var(--accent-light);color:var(--accent);padding:2px 7px;border-radius:3px;font-family:'IBM Plex Sans',sans-serif;font-weight:500" id="copy-doc-label">copia</div></div>
+        <div style="font-size:11px;color:#8a7020;margin-top:8px">Documenti supportati: Carta d'identità · Tessera sanitaria · Passaporto · Patente</div>
       </div>
 
       <div class="sep">Incolla qui il JSON ricevuto da Claude</div>
       <textarea id="json-doc-input" rows="5" style="width:100%;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--border);border-radius:var(--r);padding:9px;resize:vertical;outline:none" placeholder='{"cognome":"Rossi","nome":"Mario","codice_fiscale":"RSSMRA80A01F205X",...}'></textarea>
       <div id="json-doc-error" style="color:var(--red);font-size:12px;margin-top:5px;display:none"></div>
-      <button class="btn btn-primary" style="margin-top:10px;width:100%" onclick="parsaDoc()">🪪 Analizza e mostra dati estratti</button>
+      <button class="btn btn-primary" style="margin-top:10px;width:100%" onclick="parsaDoc()">Analizza e mostra dati estratti</button>
 
       <div id="doc-preview" style="margin-top:14px;display:none">
         <div class="sep">Dati estratti — controlla e modifica se necessario</div>
@@ -489,7 +472,7 @@ Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.
   <!-- Offerte Luce -->
   <div class="section">
     <div class="section-header">
-      <div class="sicon ic-luce">⚡</div><div class="stitle">Offerte Energia Elettrica</div>
+      <div class="sicon ic-luce"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="stitle">Offerte Energia Elettrica</div>
     </div>
     <div class="section-body">
       <div id="lista-offerte-luce"></div>
@@ -507,7 +490,7 @@ Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.
   <!-- Offerte Gas -->
   <div class="section">
     <div class="section-header">
-      <div class="sicon ic-gas">🔥</div><div class="stitle">Offerte Gas Naturale</div>
+      <div class="sicon ic-gas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div><div class="stitle">Offerte Gas Naturale</div>
     </div>
     <div class="section-body">
       <div id="lista-offerte-gas"></div>
@@ -532,7 +515,7 @@ Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.
     <button class="btn btn-ghost" onclick="resetForm()">↺ Reset</button>
     <button class="btn btn-primary" id="btn-genera" onclick="generaContratto()" disabled>
       <span class="spinner"></span>
-      <span class="btn-text">📄 Genera PDF</span>
+      <span class="btn-text">Genera PDF</span>
     </button>
   </div>
 </div>
@@ -571,6 +554,7 @@ function renderOfferteSelects(){
 }
 
 function renderOfferteManager(){
+  // Le icone Lucide vengono reinizializzate dopo il render
   ['luce','gas'].forEach(tipo=>{
     const el = document.getElementById(`lista-offerte-${tipo}`);
     if(!offerte[tipo].length){ el.innerHTML='<p style="font-size:12px;color:var(--text-soft);padding:6px 0">Nessuna offerta configurata.</p>'; return; }
@@ -585,10 +569,10 @@ function renderOfferteManager(){
           <input type="text" id="edit-cod-${tipo}-${i}"  value="${o.codice}" style="width:110px;padding:4px 7px;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--accent);border-radius:4px;outline:none">
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
-          <button class="offerta-del" id="btn-edit-${tipo}-${i}"  onclick="iniziaModifica('${tipo}',${i})"  title="Modifica" style="color:var(--accent)">✏️</button>
-          <button class="offerta-del" id="btn-save-${tipo}-${i}"  onclick="salvaModifica('${tipo}',${i})"   title="Salva"    style="display:none;color:var(--green)">✓</button>
-          <button class="offerta-del" id="btn-cancel-${tipo}-${i}" onclick="annullaModifica('${tipo}',${i})" title="Annulla"  style="display:none">✕</button>
-          <button class="offerta-del" id="btn-del-${tipo}-${i}"   onclick="eliminaOfferta('${tipo}',${i})"  title="Elimina"  style="color:var(--text-soft)">🗑</button>
+          <button class="offerta-del" id="btn-edit-${tipo}-${i}"  onclick="iniziaModifica('${tipo}',${i})"  title="Modifica" style="color:var(--accent)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+          <button class="offerta-del" id="btn-save-${tipo}-${i}"  onclick="salvaModifica('${tipo}',${i})"   title="Salva" style="display:none;color:var(--green)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+          <button class="offerta-del" id="btn-cancel-${tipo}-${i}" onclick="annullaModifica('${tipo}',${i})" title="Annulla" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <button class="offerta-del" id="btn-del-${tipo}-${i}"   onclick="eliminaOfferta('${tipo}',${i})"  title="Elimina" style="color:var(--text-soft)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </div>
       </div>`).join('');
   });
@@ -665,12 +649,12 @@ function showTab(id){
   document.getElementById('tab-'+id).classList.add('active');
   event.currentTarget.classList.add('active');
   document.getElementById('submit-bar').style.display = id==='contratto' ? 'flex' : 'none';
-}
+  }
 
 // ─── Sections ─────────────────────────────────────────────
 function toggleSec(id){
   document.getElementById(id).classList.toggle('collapsed');
-}
+  }
 
 // ─── Fornitura ────────────────────────────────────────────
 function toggleForn(tipo){
