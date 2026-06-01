@@ -401,24 +401,21 @@
     </div>
     <div class="section-body">
       <div style="background:var(--accent-light);border:1px solid #c5d5eb;border-radius:var(--r);padding:14px;margin-bottom:16px">
-        <div style="font-weight:600;font-size:13px;margin-bottom:8px">Come funziona (gratis, senza API key)</div>
-        <ol style="font-size:13px;color:var(--text-mid);padding-left:18px;line-height:2">
-          <li>Apri <strong>Claude.ai</strong> nel browser</li>
-          <li>Carica la bolletta (PDF o foto) e scrivi: <em>"Estrai i dati da questa bolletta in formato CABONA"</em></li>
-          <li>Copia il JSON che Claude ti restituisce</li>
-          <li>Incollalo qui sotto e premi <strong>Applica</strong></li>
-        </ol>
+        <div style="background:var(--accent-light);border:1px solid #c5d5eb;border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:13px;color:var(--text-mid)">
+        Carica la bolletta su qualsiasi AI (Claude, ChatGPT, Gemini), usa il prompt e incolla il JSON qui sotto.
       </div>
 
-      <div style="background:#fffbe8;border:1px solid #e8d870;border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:12px">
-        <strong>→ Messaggio da copiare su Claude.ai:</strong><br><br>
-        <div id="prompt-copy-box" style="background:white;border:1px solid var(--border);border-radius:4px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;cursor:pointer;position:relative;word-break:break-all;overflow-wrap:break-word;white-space:pre-wrap;overflow:hidden" onclick="copiaPrompt()">
-Analizza questa bolletta italiana e restituisci SOLO un JSON valido, senza testo prima o dopo, con questi campi esatti:
-{"intestatario_cognome":"","intestatario_nome":"","codice_fiscale":"","indirizzo_fornitura":"","civico":"","comune":"","cap":"","provincia":"","pod":"","pdr":"","fornitore":"","consumo_kwh":"","consumo_smc":"","potenza_kw":"","tipo_fornitura":"","remi":""}
-Per tipo_fornitura scrivi: luce, gas, oppure entrambi. Campi non trovati: stringa vuota.
-          <div style="position:absolute;top:6px;right:8px;font-size:10px;background:var(--accent-light);color:var(--accent);padding:2px 7px;border-radius:3px;font-family:'IBM Plex Sans',sans-serif" id="copy-label">📋 copia</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <span style="font-size:13px;color:var(--text-mid)">Prompt per l'analisi della bolletta</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="togglePrompt('prompt-copy-box','toggle-bolletta')" id="toggle-bolletta">Mostra prompt</button>
+          <button class="btn btn-primary btn-sm" onclick="copiaPrompt()">Copia prompt</button>
         </div>
       </div>
+      <div id="prompt-copy-box" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;word-break:break-all;overflow-wrap:break-word;white-space:pre-wrap;margin-bottom:14px">Analizza questa bolletta energetica italiana e cerca: intestatario (cognome, nome, CF), indirizzo fornitura, POD (inizia con IT per luce) o PDR (numerico per gas), fornitore attuale, consumo ANNUO in kWh (luce) e/o Smc (gas) — cerca "consumo annuo" non il periodo fatturato, potenza impegnata in kW, comune, CAP, provincia, REMI se presente.
+Restituisci SOLO questo JSON senza testo prima o dopo:
+{"intestatario_cognome":"","intestatario_nome":"","codice_fiscale":"","indirizzo_fornitura":"","civico":"","comune":"","cap":"","provincia":"","pod":"","pdr":"","fornitore":"","consumo_kwh":"","consumo_smc":"","potenza_kw":"","tipo_fornitura":"","remi":""}
+tipo_fornitura: scrivi "luce", "gas" o "entrambi". Campi non trovati: lascia "". Non inventare dati.</div>
 
       <div class="sep">Incolla qui il JSON ricevuto da Claude</div>
       <textarea id="json-input" rows="6" style="width:100%;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--border);border-radius:var(--r);padding:9px;resize:vertical;outline:none" placeholder='{"intestatario_cognome":"Rossi","intestatario_nome":"Mario",...}'></textarea>
@@ -443,13 +440,21 @@ Per tipo_fornitura scrivi: luce, gas, oppure entrambi. Campi non trovati: string
     <div class="section-body">
       <p style="font-size:13px;color:var(--text-mid);margin-bottom:14px">Carica la foto o scansione di carta d'identità e/o tessera sanitaria — i dati anagrafici vengono estratti e pre-compilati nel form cliente.</p>
 
-      <div style="background:#fffbe8;border:1px solid #e8d870;border-radius:var(--r);padding:12px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:600;color:#7a6010;letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px">Prompt da copiare su Claude.ai</div>
-        <div id="prompt-doc-box" style="background:white;border:1px solid #e8d870;border-radius:4px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;cursor:pointer;position:relative;word-break:break-all;overflow-wrap:break-word;white-space:pre-wrap;overflow:hidden" onclick="copiaPromptDoc()">Analizza questo documento di identità italiano (carta d'identità e/o tessera sanitaria) e restituisci SOLO un JSON valido senza testo prima o dopo:
-{"cognome":"","nome":"","codice_fiscale":"","data_nascita":"","luogo_nascita":"","indirizzo":"","civico":"","comune":"","cap":"","provincia":"","tipo_documento":"","numero_documento":"","scadenza_documento":""}
-Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.<div style="position:absolute;top:6px;right:8px;font-size:10px;background:var(--accent-light);color:var(--accent);padding:2px 7px;border-radius:3px;font-family:'IBM Plex Sans',sans-serif;font-weight:500" id="copy-doc-label">copia</div></div>
-        <div style="font-size:11px;color:#8a7020;margin-top:8px">Documenti supportati: Carta d'identità · Tessera sanitaria · Passaporto · Patente</div>
+      <div style="background:var(--accent-light);border:1px solid #c5d5eb;border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:13px;color:var(--text-mid)">
+        Carica il documento su qualsiasi AI (Claude, ChatGPT, Gemini), usa il prompt e incolla il JSON restituito qui sotto. Supporta: Carta d'identità · Tessera sanitaria · Passaporto · Patente
       </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <span style="font-size:13px;color:var(--text-mid)">Prompt per l'analisi del documento</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="togglePrompt('prompt-doc-box','toggle-doc')" id="toggle-doc">Mostra prompt</button>
+          <button class="btn btn-primary btn-sm" onclick="copiaPromptDoc()" id="copy-doc-label">Copia prompt</button>
+        </div>
+      </div>
+      <div id="prompt-doc-box" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.6;word-break:break-all;overflow-wrap:break-word;white-space:pre-wrap;margin-bottom:14px">Analizza questo documento di identità italiano (carta d'identità, tessera sanitaria, passaporto o patente) e cerca: cognome, nome, codice fiscale (16 caratteri), data di nascita, luogo di nascita, indirizzo di residenza, comune, CAP, provincia, tipo documento, numero documento, data di scadenza.
+Restituisci SOLO questo JSON senza testo prima o dopo:
+{"cognome":"","nome":"","codice_fiscale":"","data_nascita":"","luogo_nascita":"","indirizzo":"","civico":"","comune":"","cap":"","provincia":"","tipo_documento":"","numero_documento":"","scadenza_documento":""}
+tipo_documento: "CI" carta d'identità, "TS" tessera sanitaria, "PP" passaporto, "PAT" patente. Date in GG/MM/AAAA. Campi non trovati: lascia "". Non inventare dati.</div>
 
       <div class="sep">Incolla qui il JSON ricevuto da Claude</div>
       <textarea id="json-doc-input" rows="5" style="width:100%;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--border);border-radius:var(--r);padding:9px;resize:vertical;outline:none" placeholder='{"cognome":"Rossi","nome":"Mario","codice_fiscale":"RSSMRA80A01F205X",...}'></textarea>
@@ -747,9 +752,30 @@ document.querySelectorAll('input,select').forEach(el=>{
 
 // ─── Bolletta: incolla JSON da Claude.ai ─────────────────
 function copiaPrompt(){
-  const testo = `Analizza questa bolletta italiana e restituisci SOLO un JSON valido, senza testo prima o dopo, con questi campi esatti:
+  const testo = `Sei un assistente specializzato nell'analisi di bollette energetiche italiane.
+Analizza attentamente questa bolletta e cerca le seguenti informazioni in TUTTO il documento (incluse le pagine di dettaglio e lo scontrino energia):
+
+- intestatario_cognome: cognome dell'intestatario del contratto
+- intestatario_nome: nome dell'intestatario del contratto
+- codice_fiscale: codice fiscale dell'intestatario
+- indirizzo_fornitura: via o piazza dell'indirizzo di fornitura (solo il nome della via, senza numero civico)
+- civico: numero civico dell'indirizzo di fornitura
+- comune: città o comune dell'indirizzo di fornitura
+- cap: codice postale (5 cifre)
+- provincia: sigla provincia (2 lettere, es. BS, MI, RM)
+- pod: codice POD per la fornitura elettrica (inizia sempre con IT, es. IT001E00000000)
+- pdr: codice PDR per la fornitura gas (stringa numerica, es. 10000000000)
+- fornitore: nome del fornitore attuale (es. A2A Energia, Enel Energia, ENI Gas)
+- consumo_kwh: consumo annuo di energia elettrica in kWh (cerca "consumo annuo", "consumi annui", "kWh/anno" - usa il valore annuale, non quello del periodo fatturato)
+- consumo_smc: consumo annuo di gas in Smc o mc (cerca "consumo annuo", "Smc/anno", "mc/anno" - usa il valore annuale)
+- potenza_kw: potenza impegnata o disponibile in kW (es. 3, 4.5, 6)
+- tipo_fornitura: scrivi esattamente "luce" se è solo elettricità, "gas" se è solo gas, "entrambi" se contiene entrambe
+- remi: codice REMI per il gas (stringa numerica, se presente)
+
+Restituisci SOLO il JSON, senza testo prima o dopo, senza blocchi markdown, senza spiegazioni:
 {"intestatario_cognome":"","intestatario_nome":"","codice_fiscale":"","indirizzo_fornitura":"","civico":"","comune":"","cap":"","provincia":"","pod":"","pdr":"","fornitore":"","consumo_kwh":"","consumo_smc":"","potenza_kw":"","tipo_fornitura":"","remi":""}
-Per tipo_fornitura scrivi: luce, gas, oppure entrambi. Campi non trovati: stringa vuota.`;
+
+Se un campo non è presente o non sei sicuro, lascia la stringa vuota "". Non inventare dati.`;
   navigator.clipboard.writeText(testo).then(()=>{
     const lbl = document.getElementById('copy-label');
     lbl.textContent = '✓ copiato!';
@@ -1022,9 +1048,27 @@ function showToast(msg, cls='toast-info'){
 
 // ─── Documento identità ──────────────────────────────────
 function copiaPromptDoc(){
-  const testo = `Analizza questo documento di identità italiano (carta d'identità e/o tessera sanitaria) e restituisci SOLO un JSON valido senza testo prima o dopo:
+  const testo = `Sei un assistente specializzato nell'analisi di documenti di identità italiani.
+Analizza attentamente il documento (può essere carta d'identità, tessera sanitaria, passaporto o patente) e cerca le seguenti informazioni:
+
+- cognome: cognome del titolare
+- nome: nome del titolare
+- codice_fiscale: codice fiscale (16 caratteri alfanumerici, presente sulla tessera sanitaria e talvolta sulla carta d'identità)
+- data_nascita: data di nascita nel formato GG/MM/AAAA
+- luogo_nascita: comune di nascita
+- indirizzo: via o piazza di residenza (solo il nome della via, senza numero civico)
+- civico: numero civico della residenza
+- comune: comune di residenza
+- cap: codice postale (5 cifre), se presente
+- provincia: sigla provincia di residenza (2 lettere, es. BS)
+- tipo_documento: scrivi esattamente "CI" per carta d'identità, "TS" per tessera sanitaria, "PP" per passaporto, "PAT" per patente
+- numero_documento: numero del documento (es. CA00000AA per CI, TEAM-IT per tessera sanitaria)
+- scadenza_documento: data di scadenza nel formato GG/MM/AAAA
+
+Restituisci SOLO il JSON, senza testo prima o dopo, senza blocchi markdown, senza spiegazioni:
 {"cognome":"","nome":"","codice_fiscale":"","data_nascita":"","luogo_nascita":"","indirizzo":"","civico":"","comune":"","cap":"","provincia":"","tipo_documento":"","numero_documento":"","scadenza_documento":""}
-Campi non trovati: stringa vuota. Per tipo_documento scrivi: CI oppure TS.`;
+
+Se un campo non è presente o non sei sicuro, lascia la stringa vuota "". Non inventare dati.`;
   navigator.clipboard.writeText(testo).then(()=>{
     const lbl = document.getElementById('copy-doc-label');
     lbl.textContent = '✓ copiato!';
@@ -1098,6 +1142,15 @@ function applicaDatiDoc(){
   showTab_direct('contratto');
   showToast('✓ Dati anagrafici applicati!','toast-ok');
   updateSummary();
+}
+
+// ─── Toggle prompt visibilità ────────────────────────────
+function togglePrompt(boxId, btnId){
+  const box = document.getElementById(boxId);
+  const btn = document.getElementById(btnId);
+  const visible = box.style.display !== 'none';
+  box.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? 'Mostra prompt' : 'Nascondi prompt';
 }
 
 // Init submit bar display
