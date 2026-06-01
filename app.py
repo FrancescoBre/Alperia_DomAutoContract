@@ -324,7 +324,7 @@ def compila():
 
     if d.get("vuole_luce", False):
         fields["EE sì"] = "/On"
-        fields["Strom Art der Anfrage"]    = tipo_luce_map.get(d.get("tipo_richiesta_luce", "switch"), "/0")
+        fields["Strom Art der Anfrage"]    = get_tipo(d.get("tipo_richiesta_luce", "switch"))
         fields["POD A"]                    = d.get("pod", "")
         fields["Fornitore Uscente"]         = d.get("fornitore_uscente_luce", "")
         fields["Consumo annuo kWh"]         = str(d.get("consumo_kwh", ""))
@@ -337,7 +337,7 @@ def compila():
 
     if d.get("vuole_gas", False):
         fields["Gas sì"] = "/On"
-        fields["Gas Art der Anfrage"]         = tipo_gas_map.get(d.get("tipo_richiesta_gas", "switch"), "/0")
+        fields["Gas Art der Anfrage"]      = get_tipo(d.get("tipo_richiesta_gas", "switch"))
         fields["PDR"]                         = d.get("pdr", "")
         fields["Fornitore Uscente_4"]         = d.get("fornitore_uscente_gas", "")
         fields["Consumo annuo smc"]           = str(d.get("consumo_smc", ""))
