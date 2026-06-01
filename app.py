@@ -7,41 +7,27 @@ app = Flask(__name__)
 
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "template_alperia.pdf")
 
-# ─────────────────────────────────────────────────────────────
-# OFFERTE DEFAULT — modifica qui e fai push su GitHub
-# per aggiornare le offerte su Render in modo permanente
-# ─────────────────────────────────────────────────────────────
-# ─────────────────────────────────────────────────────────────
-# OFFERTE DEFAULT — usate come fallback se il DB non è disponibile
-# ─────────────────────────────────────────────────────────────
 DEFAULT_OFFERTE = {
     "luce": [
         {"nome": "Alperia Direct Energy", "codice": "DIRE-EE"},
     ],
     "gas": [
         {"nome": "Alperia Gas Smile Start", "codice": "GSS-GN"},
-    ]
+    ],
 }
-
-# ─────────────────────────────────────────────────────────────
-# DATABASE — usa Supabase/PostgreSQL se DATABASE_URL è presente,
-# altrimenti cade su storage in memoria
-# ─────────────────────────────────────────────────────────────
-import os
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
+
 def get_db():
-    """Apre una connessione al database PostgreSQL."""
     import psycopg2
     url = DATABASE_URL
-    # Render usa postgres:// ma psycopg2 vuole postgresql://
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
     return psycopg2.connect(url)
 
+
 def init_db():
-    """Crea la tabella offerte se non esiste e inserisce i default."""
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -53,7 +39,6 @@ def init_db():
                 codice TEXT NOT NULL
             )
         """)
-        # Inserisce i default solo se la tabella è vuota
         cur.execute("SELECT COUNT(*) FROM offerte")
         if cur.fetchone()[0] == 0:
             for tipo, lista in DEFAULT_OFFERTE.items():
@@ -68,8 +53,9 @@ def init_db():
     except Exception as e:
         print(f"DB init warning: {e}")
 
-# Storage in memoria — fallback se DATABASE_URL non è configurato
+
 _offerte_runtime = copy.deepcopy(DEFAULT_OFFERTE)
+
 
 def load_offerte():
     if DATABASE_URL:
@@ -87,6 +73,7 @@ def load_offerte():
         except Exception as e:
             print(f"DB load error: {e}")
     return copy.deepcopy(_offerte_runtime)
+
 
 def save_offerte(data):
     if DATABASE_URL:
@@ -108,19 +95,20 @@ def save_offerte(data):
     global _offerte_runtime
     _offerte_runtime = copy.deepcopy(data)
 
-# Inizializza il DB all'avvio se DATABASE_URL è configurato
+
 if DATABASE_URL:
     init_db()
 
-# --- Routes ---
 
 @app.route("/")
 def index():
     return app.send_static_file("index.html")
 
+
 @app.route("/api/offerte", methods=["GET"])
 def get_offerte():
     return jsonify(load_offerte())
+
 
 @app.route("/api/offerte", methods=["POST"])
 def set_offerte():
@@ -128,18 +116,20 @@ def set_offerte():
     save_offerte(data)
     return jsonify({"ok": True})
 
+
 @app.route("/api/offerte/aggiungi", methods=["POST"])
 def aggiungi_offerta():
-    d = request.json  # {tipo: "luce"|"gas", nome: "...", codice: "..."}
+    d = request.json
     offerte = load_offerte()
     tipo = d.get("tipo", "luce")
     offerte[tipo].append({"nome": d["nome"], "codice": d["codice"]})
     save_offerte(offerte)
     return jsonify({"ok": True, "offerte": offerte})
 
+
 @app.route("/api/offerte/elimina", methods=["POST"])
 def elimina_offerta():
-    d = request.json  # {tipo: "luce"|"gas", index: N}
+    d = request.json
     offerte = load_offerte()
     tipo = d.get("tipo")
     idx  = d.get("index")
@@ -147,6 +137,7 @@ def elimina_offerta():
         offerte[tipo].pop(idx)
         save_offerte(offerte)
     return jsonify({"ok": True, "offerte": offerte})
+
 
 @app.route("/api/offerte/modifica", methods=["POST"])
 def modifica_offerta():
@@ -161,13 +152,11 @@ def modifica_offerta():
         save_offerte(offerte)
     return jsonify({"ok": True, "offerte": offerte})
 
+
 def get_api_key():
-    """Legge la chiave API da variabile d'ambiente o dal file config.json"""
-    # 1. Variabile d'ambiente (priorità massima)
     key = os.environ.get("ANTHROPIC_API_KEY", "")
     if key:
         return key
-    # 2. File config.json nella stessa cartella dell'app
     config_path = os.path.join(os.path.dirname(__file__), "config.json")
     if os.path.exists(config_path):
         with open(config_path) as f:
@@ -175,10 +164,12 @@ def get_api_key():
         return cfg.get("ANTHROPIC_API_KEY", "")
     return ""
 
+
 @app.route("/api/check_api_key")
 def check_api_key():
     key = get_api_key()
     return jsonify({"configurata": bool(key), "lunghezza": len(key)})
+
 
 @app.route("/api/salva_api_key", methods=["POST"])
 def salva_api_key():
@@ -195,9 +186,9 @@ def salva_api_key():
         json.dump(cfg, f, indent=2)
     return jsonify({"ok": True})
 
+
 @app.route("/api/leggi_bolletta", methods=["POST"])
 def leggi_bolletta():
-    """Usa Claude API per estrarre dati tecnici dalla bolletta (PDF o immagine)"""
     import base64, urllib.request, urllib.error
 
     api_key = get_api_key()
@@ -210,8 +201,8 @@ def leggi_bolletta():
 
     data_bytes = file.read()
     mime = file.content_type or "application/pdf"
-    # Normalizza mime type per immagini
-    if mime in ("image/jpg",): mime = "image/jpeg"
+    if mime in ("image/jpg",):
+        mime = "image/jpeg"
     b64 = base64.standard_b64encode(data_bytes).decode()
 
     if mime == "application/pdf":
@@ -263,13 +254,15 @@ Se un dato non è presente lascia il campo con stringa vuota "". Estrai solo dat
         with urllib.request.urlopen(req, timeout=45) as resp:
             result = json.loads(resp.read())
         text = result["content"][0]["text"].strip()
-        # Pulisci eventuali backtick markdown
         if "```" in text:
             parts = text.split("```")
             for p in parts:
                 p = p.strip()
-                if p.startswith("json"): p = p[4:].strip()
-                if p.startswith("{"): text = p; break
+                if p.startswith("json"):
+                    p = p[4:].strip()
+                if p.startswith("{"):
+                    text = p
+                    break
         extracted = json.loads(text.strip())
         return jsonify({"ok": True, "dati": extracted})
     except urllib.error.HTTPError as e:
@@ -280,6 +273,7 @@ Se un dato non è presente lascia il campo con stringa vuota "". Estrai solo dat
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/api/compila", methods=["POST"])
 def compila():
     d = request.json
@@ -288,78 +282,70 @@ def compila():
     tipo_map = {"switch": "/Auswahl4", "subentro": "/Auswahl5", "voltura": "/Auswahl6", "nuova": "/Auswahl7"}
 
     def get_tipo(val):
-        # val può essere lista o stringa
         if isinstance(val, list) and val:
             return tipo_map.get(val[0], "/Auswahl4")
         if isinstance(val, str) and val:
             return tipo_map.get(val, "/Auswahl4")
         return "/Auswahl4"
 
-    tipo_luce_map = tipo_map  # mantenuto per compatibilità
-    tipo_gas_map  = tipo_map
+    tipo_luce_map     = tipo_map
+    tipo_gas_map      = tipo_map
     tipologia_uso_map = {"residente": "/Auswahl1", "non_residente": "/Auswahl2", "altri": "/Auswahl3"}
     titolo_map        = {"proprieta": "/proprietà/usufrutto", "locazione": "/locazione/affitto", "altro": "/detenzione altro titolo"}
     doc_map           = {"ci": "/carta identità", "patente": "/patente", "passaporto": "/passaporto"}
 
     fields = {}
 
-    # Header
-
-    # Dati cliente
-    fields["Cognome"]  = d.get("cognome", "")
-    fields["Nome"]     = d.get("nome", "")
-    fields["CF"]       = d.get("cf", "").upper()
-    fields["Residente si no"] = "/Auswahl1" if d.get("residente", True) else "/Auswahl2"
+    fields["Cognome"] = d.get("cognome", "")
+    fields["Nome"]    = d.get("nome", "")
+    fields["CF"]      = d.get("cf", "").upper()
+    fields["Residente si no"]        = "/Auswahl1" if d.get("residente", True) else "/Auswahl2"
     fields["Indirizzo di residenza"] = d.get("indirizzo_res", "")
-    fields["N"]        = d.get("civico_res", "")
-    fields["Comune"]   = d.get("comune_res", "")
-    fields["CAP"]      = d.get("cap_res", "")
-    fields["Prov"]     = d.get("prov_res", "")
+    fields["N"]      = d.get("civico_res", "")
+    fields["Comune"] = d.get("comune_res", "")
+    fields["CAP"]    = d.get("cap_res", "")
+    fields["Prov"]   = d.get("prov_res", "")
     fields["Documento d'identità"] = doc_map.get(d.get("tipo_doc", "ci"), "/0")
-    fields["Telefono"] = d.get("telefono", "")
-    fields["Cellulare"]= d.get("cellulare", "")
-    fields["Email"]    = d.get("email", "")
+    fields["Telefono"]  = d.get("telefono", "")
+    fields["Cellulare"] = d.get("cellulare", "")
+    fields["Email"]     = d.get("email", "")
     fields["Email per invio bolletta e altre comunicazioni contrattualmente previste"] = \
         d.get("email_bolletta") or d.get("email", "")
 
-    # Indirizzo fornitura se diverso
     if not d.get("fornitura_uguale_residenza", True):
-        fields["Indirizzo"]  = d.get("indirizzo_forn", "")
-        fields["N_2"]        = d.get("civico_forn", "")
-        fields["Comune_2"]   = d.get("comune_forn", "")
-        fields["CAP_2"]      = d.get("cap_forn", "")
-        fields["Prov_2"]     = d.get("prov_forn", "")
+        fields["Indirizzo"] = d.get("indirizzo_forn", "")
+        fields["N_2"]       = d.get("civico_forn", "")
+        fields["Comune_2"]  = d.get("comune_forn", "")
+        fields["CAP_2"]     = d.get("cap_forn", "")
+        fields["Prov_2"]    = d.get("prov_forn", "")
 
     fields["titolo sull'immobile"] = titolo_map.get(d.get("titolo_immobile", "proprieta"), "/0")
     fields["DATA"] = today
 
-    # --- ENERGIA ELETTRICA ---
     if d.get("vuole_luce", False):
-        fields["EE sì"]               = "/On"
-        fields["Strom Art der Anfrage"] = tipo_luce_map.get(d.get("tipo_richiesta_luce", "switch"), "/0")
-        fields["POD A"]               = d.get("pod", "")
-        fields["Fornitore Uscente"]   = d.get("fornitore_uscente_luce", "")
-        fields["Consumo annuo kWh"]   = str(d.get("consumo_kwh", ""))
-        fields["Potenza impegnata kW_2"] = str(d.get("potenza_kw", ""))
-        fields["Tipologia d'uso"]     = tipologia_uso_map.get(d.get("tipologia_uso", "residente"), "/0")
+        fields["EE sì"] = "/On"
+        fields["Strom Art der Anfrage"]    = tipo_luce_map.get(d.get("tipo_richiesta_luce", "switch"), "/0")
+        fields["POD A"]                    = d.get("pod", "")
+        fields["Fornitore Uscente"]         = d.get("fornitore_uscente_luce", "")
+        fields["Consumo annuo kWh"]         = str(d.get("consumo_kwh", ""))
+        fields["Potenza impegnata kW_2"]    = str(d.get("potenza_kw", ""))
+        fields["Tipologia d'uso"]           = tipologia_uso_map.get(d.get("tipologia_uso", "residente"), "/0")
         fields["Nome Offerta sottoscritta"] = d.get("offerta_luce_nome", "")
-        fields["Codice offerta"]      = d.get("offerta_luce_codice", "")
+        fields["Codice offerta"]            = d.get("offerta_luce_codice", "")
         if d.get("data_attivazione_luce"):
             fields["Data Attivazione"] = d.get("data_attivazione_luce", "")
 
-    # --- GAS NATURALE ---
     if d.get("vuole_gas", False):
-        fields["Gas sì"]               = "/On"
-        fields["Gas  Art der Anfrage"] = tipo_gas_map.get(d.get("tipo_richiesta_gas", "switch"), "/0")
-        fields["PDR"]                  = d.get("pdr", "")
-        fields["Fornitore Uscente_4"]  = d.get("fornitore_uscente_gas", "")
-        fields["Consumo annuo smc"]    = str(d.get("consumo_smc", ""))
-        fields["REMI"]                 = d.get("remi", "")
+        fields["Gas sì"] = "/On"
+        fields["Gas Art der Anfrage"]         = tipo_gas_map.get(d.get("tipo_richiesta_gas", "switch"), "/0")
+        fields["PDR"]                         = d.get("pdr", "")
+        fields["Fornitore Uscente_4"]         = d.get("fornitore_uscente_gas", "")
+        fields["Consumo annuo smc"]           = str(d.get("consumo_smc", ""))
+        fields["REMI"]                        = d.get("remi", "")
         fields["Nome Offerta sottoscritta_2"] = d.get("offerta_gas_nome", "")
-        fields["Codice offerta_2"]     = d.get("offerta_gas_codice", "")
+        fields["Codice offerta_2"]            = d.get("offerta_gas_codice", "")
         if d.get("data_attivazione_gas"):
             fields["Data Attivazione_2"] = d.get("data_attivazione_gas", "")
-        # Categoria d'uso gas — multi-selezione
         categorie = d.get("categorie_gas", [])
         if "riscaldamento" in categorie:
             fields["Kontrollkästchen7"] = "/Ja"
@@ -368,39 +354,37 @@ def compila():
         if "acqua_calda" in categorie:
             fields["Kontrollkästchen9"] = "/Ja"
 
-    # --- SEPA ---
     if d.get("iban"):
         debitore_uguale = d.get("debitore_uguale_titolare", True)
-        addr = f"{d.get('indirizzo_res','')} {d.get('civico_res','')}, {d.get('cap_res','')} {d.get('comune_res','')}".strip(", ")
-        fields["IBAN"]                 = d.get("iban", "").upper().replace(" ", "")
-        fields["Presso la Banca"]      = d.get("banca", "")
-        fields["Cognome Nome del Debitore"] = f"{d.get('cognome','')} {d.get('nome','')}".strip()
-        fields["Indirizzo Via  Piazza  CAP e COMUNE"] = addr
+        addr = (
+            f"{d.get('indirizzo_res', '')} {d.get('civico_res', '')}, "
+            f"{d.get('cap_res', '')} {d.get('comune_res', '')}"
+        ).strip(", ")
+        fields["IBAN"]                              = d.get("iban", "").upper().replace(" ", "")
+        fields["Presso la Banca"]                   = d.get("banca", "")
+        fields["Cognome Nome del Debitore"]         = f"{d.get('cognome', '')} {d.get('nome', '')}".strip()
+        fields["Indirizzo Via Piazza CAP e COMUNE"] = addr
         fields["Zahlungspflichtiger gleich Kontoinhaber"] = "/Auswahl1" if debitore_uguale else "/Auswahl2"
         fields["DATA_2"] = today
         if not debitore_uguale:
             fields["Titolare del Conto Corrente (se diverso dal Debitore) Cognome"] = d.get("titolare_cognome", "")
             fields["Titolare del Conto Corrente (se diverso dal Debitore) Nome"]    = d.get("titolare_nome", "")
-            fields["Codice Fiscale  Partita IVA del Titolare del Conto Corrente"]   = d.get("titolare_cf", "")
+            fields["Codice Fiscale Partita IVA del Titolare del Conto Corrente"]    = d.get("titolare_cf", "")
 
-    # --- PAGINA 2: Privacy ---
     fields["dichiara di aver preso visione dellInformativa di Alperia Smart Services Srl al Cliente in merito al Trattamento dei Dati Personali ai sensi degli articoli 13 e 14 del Regolamento generale sulla protezione"] = "/On"
-    fields["Verarbeitung der Daten"]   = "/Auswahl3"   # Marketing: SI
-    fields["Verarbeitung der Daten 2"] = "/Auswahl6"   # Profilazione: NO
-    fields["Verarbeitung der Daten 3"] = "/Auswahl7"   # Comunicaz. terzi: NO
-    fields["DATA_3"] = today   # Privacy consenso
+    fields["Verarbeitung der Daten"]   = "/Auswahl3"
+    fields["Verarbeitung der Daten 2"] = "/Auswahl6"
+    fields["Verarbeitung der Daten 3"] = "/Auswahl7"
+    fields["DATA_3"] = today
 
-    # DATA_4 = Richiesta esecuzione anticipata (se richiesta)
     if d.get("esecuzione_anticipata", False):
         fields["DATA_4"] = today
-    
-    fields["DATA_5"] = today   # Formulazione proposta
-    fields["DATA_6"] = today   # Approvazione clausole specifiche
 
-    # Rimuovi None
+    fields["DATA_5"] = today
+    fields["DATA_6"] = today
+
     fields = {k: v for k, v in fields.items() if v is not None}
 
-    # --- Compila PDF ---
     reader = PdfReader(TEMPLATE_PATH)
     writer = PdfWriter()
     writer.append(reader)
@@ -411,12 +395,12 @@ def compila():
     writer.write(buf)
     buf.seek(0)
 
-    nome_file = f"Contratto_Alperia_{d.get('cognome','')}_{d.get('nome','')}.pdf".replace(" ", "_")
+    nome_file = f"Contratto_Alperia_{d.get('cognome', '')}_{d.get('nome', '')}.pdf".replace(" ", "_")
     return send_file(buf, mimetype="application/pdf",
                      as_attachment=True, download_name=nome_file)
 
+
 if __name__ == "__main__":
-    # In locale usa porta 7860, su Render usa la variabile PORT
-    port = int(os.environ.get("PORT", 7860))
-    debug = os.environ.get("RENDER") is None  # debug solo in locale
+    port  = int(os.environ.get("PORT", 7860))
+    debug = os.environ.get("RENDER") is None
     app.run(debug=debug, host="0.0.0.0", port=port)
