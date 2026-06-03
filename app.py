@@ -59,12 +59,13 @@ _offerte_runtime = copy.deepcopy(DEFAULT_OFFERTE)
 
 def load_offerte():
     if DATABASE_URL:
+        conn = None
         try:
             conn = get_db()
             cur = conn.cursor()
             cur.execute("SELECT tipo, nome, codice FROM offerte ORDER BY id")
             rows = cur.fetchall()
-            cur.close(); conn.close()
+            cur.close()
             result = {"luce": [], "gas": []}
             for tipo, nome, codice in rows:
                 if tipo in result:
@@ -72,11 +73,16 @@ def load_offerte():
             return result
         except Exception as e:
             print(f"DB load error: {e}")
+            return copy.deepcopy(_offerte_runtime)
+        finally:
+            if conn:
+                conn.close()
     return copy.deepcopy(_offerte_runtime)
 
 
 def save_offerte(data):
     if DATABASE_URL:
+        conn = None
         try:
             conn = get_db()
             cur = conn.cursor()
@@ -88,10 +94,13 @@ def save_offerte(data):
                         (tipo, o["nome"], o["codice"])
                     )
             conn.commit()
-            cur.close(); conn.close()
+            cur.close()
             return
         except Exception as e:
             print(f"DB save error: {e}")
+        finally:
+            if conn:
+                conn.close()
     global _offerte_runtime
     _offerte_runtime = copy.deepcopy(data)
 
@@ -122,7 +131,13 @@ def aggiungi_offerta():
     d = request.json
     offerte = load_offerte()
     tipo = d.get("tipo", "luce")
-    offerte[tipo].append({"nome": d["nome"], "codice": d["codice"]})
+    if tipo not in offerte:
+        return jsonify({"error": "tipo non valido"}), 400
+    nome = d.get("nome", "").strip()
+    codice = d.get("codice", "").strip()
+    if not nome or not codice:
+        return jsonify({"error": "nome e codice obbligatori"}), 400
+    offerte[tipo].append({"nome": nome, "codice": codice})
     save_offerte(offerte)
     return jsonify({"ok": True, "offerte": offerte})
 
@@ -130,9 +145,14 @@ def aggiungi_offerta():
 @app.route("/api/offerte/elimina", methods=["POST"])
 def elimina_offerta():
     d = request.json
-    offerte = load_offerte()
     tipo = d.get("tipo")
     idx  = d.get("index")
+    # FIX: validazione parametri prima dell'uso
+    if not tipo or idx is None or not isinstance(idx, int):
+        return jsonify({"error": "parametri mancanti o non validi"}), 400
+    offerte = load_offerte()
+    if tipo not in offerte:
+        return jsonify({"error": "tipo non valido"}), 400
     if 0 <= idx < len(offerte[tipo]):
         offerte[tipo].pop(idx)
         save_offerte(offerte)
@@ -146,8 +166,13 @@ def modifica_offerta():
     idx    = d.get("index")
     nome   = d.get("nome", "").strip()
     codice = d.get("codice", "").strip()
+    # FIX: validazione parametri prima dell'uso
+    if not tipo or idx is None or not isinstance(idx, int):
+        return jsonify({"error": "parametri mancanti o non validi"}), 400
     offerte = load_offerte()
-    if nome and codice and 0 <= idx < len(offerte.get(tipo, [])):
+    if tipo not in offerte:
+        return jsonify({"error": "tipo non valido"}), 400
+    if nome and codice and 0 <= idx < len(offerte[tipo]):
         offerte[tipo][idx] = {"nome": nome, "codice": codice}
         save_offerte(offerte)
     return jsonify({"ok": True, "offerte": offerte})
@@ -201,14 +226,18 @@ def leggi_bolletta():
 
     data_bytes = file.read()
     mime = file.content_type or "application/pdf"
-    if mime in ("image/jpg",):
-        mime = "image/jpeg"
+    # FIX: normalizza tutti gli alias comuni di MIME type
+    mime_map = {"image/jpg": "image/jpeg", "image/JPG": "image/jpeg"}
+    mime = mime_map.get(mime, mime)
+
     b64 = base64.standard_b64encode(data_bytes).decode()
 
     if mime == "application/pdf":
         media_block = {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": b64}}
-    else:
+    elif mime in ("image/jpeg", "image/png", "image/gif", "image/webp"):
         media_block = {"type": "image", "source": {"type": "base64", "media_type": mime, "data": b64}}
+    else:
+        return jsonify({"error": f"Tipo file non supportato: {mime}. Usa PDF, JPEG o PNG."}), 400
 
     prompt = """Analizza questa bolletta di energia elettrica o gas naturale italiana e estrai i seguenti dati in formato JSON puro (nessun testo prima o dopo, solo JSON valido):
 
@@ -288,8 +317,7 @@ def compila():
             return tipo_map.get(val, "/Auswahl4")
         return "/Auswahl4"
 
-    tipo_luce_map     = tipo_map
-    tipo_gas_map      = tipo_map
+    # FIX: rimossi tipo_luce_map e tipo_gas_map che erano alias inutilizzati di tipo_map
     tipologia_uso_map = {"residente": "/Auswahl1", "non_residente": "/Auswahl2", "altri": "/Auswahl3"}
     titolo_map        = {"proprieta": "/proprietà/usufrutto", "locazione": "/locazione/affitto", "altro": "/detenzione altro titolo"}
     doc_map           = {"ci": "/carta identità", "patente": "/patente", "passaporto": "/passaporto"}
@@ -383,13 +411,24 @@ def compila():
     fields["DATA_5"] = today
     fields["DATA_6"] = today
 
-    fields = {k: v for k, v in fields.items() if v is not None}
+    # FIX: filtra sia None che stringhe vuote per non inviare campi vuoti al PDF
+    fields = {k: v for k, v in fields.items() if v}
 
     reader = PdfReader(TEMPLATE_PATH)
     writer = PdfWriter()
     writer.append(reader)
-    writer.update_page_form_field_values(writer.pages[2], fields)
-    writer.update_page_form_field_values(writer.pages[3], fields)
+
+    # FIX: cerca dinamicamente le pagine con campi compilabili invece di usare indici fissi
+    pages_with_fields = []
+    for i, page in enumerate(writer.pages):
+        if "/Annots" in page:
+            pages_with_fields.append(i)
+
+    # Aggiorna le pagine trovate (di default pagine 2 e 3 del template Alperia)
+    target_pages = pages_with_fields if pages_with_fields else [2, 3]
+    for page_idx in target_pages:
+        if page_idx < len(writer.pages):
+            writer.update_page_form_field_values(writer.pages[page_idx], fields)
 
     buf = io.BytesIO()
     writer.write(buf)
