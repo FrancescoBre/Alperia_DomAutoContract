@@ -303,6 +303,37 @@ Se un dato non è presente lascia il campo con stringa vuota "". Estrai solo dat
         return jsonify({"error": str(e)}), 500
 
 
+def fill_radio_groups(writer, radio_fields):
+    """
+    Setta i radio button direttamente sugli oggetti figlio via /AS e /V sul parent.
+    pypdf non gestisce correttamente i radio group tramite update_page_form_field_values,
+    quindi è necessario operare direttamente sulle annotazioni.
+    radio_fields: dict { parent_name: value }
+    """
+    from pypdf.generic import NameObject
+    for page in writer.pages:
+        if "/Annots" not in page:
+            continue
+        for annot_ref in page["/Annots"]:
+            annot = annot_ref.get_object()
+            parent_ref = annot.get("/Parent")
+            if not parent_ref:
+                continue
+            parent = parent_ref.get_object()
+            parent_name = str(parent.get("/T", ""))
+            if parent_name not in radio_fields:
+                continue
+            desired_value = radio_fields[parent_name]
+            ap = annot.get("/AP", {})
+            if "/N" in ap:
+                n = ap["/N"].get_object()
+                if hasattr(n, 'keys'):
+                    options = [str(k) for k in n.keys()]
+                    if desired_value in options:
+                        annot_ref.get_object()[NameObject("/AS")] = NameObject(desired_value)
+                        parent_ref.get_object()[NameObject("/V")]  = NameObject(desired_value)
+
+
 @app.route("/api/compila", methods=["POST"])
 def compila():
     d = request.json
@@ -327,13 +358,11 @@ def compila():
     fields["Cognome"] = d.get("cognome", "")
     fields["Nome"]    = d.get("nome", "")
     fields["CF"]      = d.get("cf", "").upper()
-    fields["Residente si no"]        = "/Auswahl1" if d.get("residente", True) else "/Auswahl2"
     fields["Indirizzo di residenza"] = d.get("indirizzo_res", "")
     fields["N"]      = d.get("civico_res", "")
     fields["Comune"] = d.get("comune_res", "")
     fields["CAP"]    = d.get("cap_res", "")
     fields["Prov"]   = d.get("prov_res", "")
-    fields["Documento d'identità"] = doc_map.get(d.get("tipo_doc", "ci"), "/0")
     fields["Telefono"]  = d.get("telefono", "")
     fields["Cellulare"] = d.get("cellulare", "")
     fields["Email"]     = d.get("email", "")
@@ -347,25 +376,43 @@ def compila():
         fields["CAP_2"]     = d.get("cap_forn", "")
         fields["Prov_2"]    = d.get("prov_forn", "")
 
-    fields["titolo sull'immobile"] = titolo_map.get(d.get("titolo_immobile", "proprieta"), "/0")
     fields["DATA"] = today
+
+    # Radio group separati — vanno settati con fill_radio_groups, non con update_page_form_field_values
+    # FIX: "Gas  Art der Anfrage" ha due spazi nel PDF (nome campo verificato sull'oggetto PDF)
+    radio_fields = {
+        "Residente si no": "/Auswahl1" if d.get("residente", True) else "/Auswahl2",
+        "titolo sull'immobile": titolo_map.get(d.get("titolo_immobile", "proprieta"), "/proprietà/usufrutto"),
+        "Documento d'identità": doc_map.get(d.get("tipo_doc", "ci"), "/carta identità"),
+        "Zahlungspflichtiger gleich Kontoinhaber": "/Auswahl1" if d.get("debitore_uguale_titolare", True) else "/Auswahl2",
+        "Verarbeitung der Daten":   "/Auswahl3",
+        "Verarbeitung der Daten 2": "/Auswahl6",
+        "Verarbeitung der Daten 3": "/Auswahl7",
+    }
+
+    # Rimuovi i campi radio dai fields testo (erano settati erroneamente prima)
+    for k in ["Residente si no", "titolo sull'immobile", "Documento d'identità",
+              "Zahlungspflichtiger gleich Kontoinhaber",
+              "Verarbeitung der Daten", "Verarbeitung der Daten 2", "Verarbeitung der Daten 3"]:
+        fields.pop(k, None)
 
     if d.get("vuole_luce", False):
         fields["EE sì"] = "/On"
-        fields["Strom Art der Anfrage"]    = get_tipo(d.get("tipo_richiesta_luce", "switch"))
         fields["POD A"]                    = d.get("pod", "")
         fields["Fornitore Uscente"]         = d.get("fornitore_uscente_luce", "")
         fields["Consumo annuo kWh"]         = str(d.get("consumo_kwh", ""))
         fields["Potenza impegnata kW_2"]    = str(d.get("potenza_kw", ""))
-        fields["Tipologia d'uso"]           = tipologia_uso_map.get(d.get("tipologia_uso", "residente"), "/0")
         fields["Nome Offerta sottoscritta"] = d.get("offerta_luce_nome", "")
         fields["Codice offerta"]            = d.get("offerta_luce_codice", "")
         if d.get("data_attivazione_luce"):
             fields["Data Attivazione"] = d.get("data_attivazione_luce", "")
+        # FIX: tipo richiesta luce via radio group
+        radio_fields["Strom Art der Anfrage"]  = get_tipo(d.get("tipo_richiesta_luce", "switch"))
+        # FIX: tipologia uso via radio group
+        radio_fields["Tipologia d'uso"] = tipologia_uso_map.get(d.get("tipologia_uso", "residente"), "/Auswahl1")
 
     if d.get("vuole_gas", False):
         fields["Gas sì"] = "/On"
-        fields["Gas Art der Anfrage"]      = get_tipo(d.get("tipo_richiesta_gas", "switch"))
         fields["PDR"]                         = d.get("pdr", "")
         fields["Fornitore Uscente_4"]         = d.get("fornitore_uscente_gas", "")
         fields["Consumo annuo smc"]           = str(d.get("consumo_smc", ""))
@@ -381,6 +428,8 @@ def compila():
             fields["Kontrollkästchen8"] = "/Ja"
         if "acqua_calda" in categorie:
             fields["Kontrollkästchen9"] = "/Ja"
+        # FIX: tipo richiesta gas via radio group — nome campo con DOPPIO SPAZIO nel PDF
+        radio_fields["Gas  Art der Anfrage"] = get_tipo(d.get("tipo_richiesta_gas", "switch"))
 
     if d.get("iban"):
         debitore_uguale = d.get("debitore_uguale_titolare", True)
@@ -392,7 +441,6 @@ def compila():
         fields["Presso la Banca"]                   = d.get("banca", "")
         fields["Cognome Nome del Debitore"]         = f"{d.get('cognome', '')} {d.get('nome', '')}".strip()
         fields["Indirizzo Via Piazza CAP e COMUNE"] = addr
-        fields["Zahlungspflichtiger gleich Kontoinhaber"] = "/Auswahl1" if debitore_uguale else "/Auswahl2"
         fields["DATA_2"] = today
         if not debitore_uguale:
             fields["Titolare del Conto Corrente (se diverso dal Debitore) Cognome"] = d.get("titolare_cognome", "")
@@ -400,9 +448,6 @@ def compila():
             fields["Codice Fiscale Partita IVA del Titolare del Conto Corrente"]    = d.get("titolare_cf", "")
 
     fields["dichiara di aver preso visione dellInformativa di Alperia Smart Services Srl al Cliente in merito al Trattamento dei Dati Personali ai sensi degli articoli 13 e 14 del Regolamento generale sulla protezione"] = "/On"
-    fields["Verarbeitung der Daten"]   = "/Auswahl3"
-    fields["Verarbeitung der Daten 2"] = "/Auswahl6"
-    fields["Verarbeitung der Daten 3"] = "/Auswahl7"
     fields["DATA_3"] = today
 
     if d.get("esecuzione_anticipata", False):
@@ -424,11 +469,13 @@ def compila():
         if "/Annots" in page:
             pages_with_fields.append(i)
 
-    # Aggiorna le pagine trovate (di default pagine 2 e 3 del template Alperia)
     target_pages = pages_with_fields if pages_with_fields else [2, 3]
     for page_idx in target_pages:
         if page_idx < len(writer.pages):
             writer.update_page_form_field_values(writer.pages[page_idx], fields)
+
+    # FIX: setta i radio group direttamente sugli oggetti figlio (pypdf non li gestisce via update_page_form_field_values)
+    fill_radio_groups(writer, radio_fields)
 
     buf = io.BytesIO()
     writer.write(buf)
