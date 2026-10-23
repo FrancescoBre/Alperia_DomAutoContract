@@ -384,6 +384,17 @@
         <label class="toggle"><input type="checkbox" id="tog-esec"><div class="ttrack"></div><div class="tthumb"></div></label>
         <label>Richiesta esecuzione anticipata (prima del ripensamento)</label>
       </div>
+      <div class="trow" onclick="toggleInfo()">
+        <label class="toggle"><input type="checkbox" id="tog-info"><div class="ttrack"></div><div class="tthumb"></div></label>
+        <label>Informativa privacy consegnata al cliente (spunta "presa visione")</label>
+      </div>
+      <p style="font-size:12px;color:var(--text-soft);margin:10px 0 6px">Consensi facoltativi (privacy). Se lasci "vuoto" la casella resta da compilare a mano insieme al cliente.</p>
+      <div class="field"><label>Marketing (finalità 4)</label>
+        <select id="cons_marketing"><option value="">— vuoto (decide il cliente) —</option><option value="si">SÌ</option><option value="no">NO</option></select></div>
+      <div class="field"><label>Profilazione (finalità 5)</label>
+        <select id="cons_profilazione"><option value="">— vuoto (decide il cliente) —</option><option value="si">SÌ</option><option value="no">NO</option></select></div>
+      <div class="field"><label>Comunicazione a terzi (finalità 6)</label>
+        <select id="cons_terzi"><option value="">— vuoto (decide il cliente) —</option><option value="si">SÌ</option><option value="no">NO</option></select></div>
     </div>
   </div>
 
@@ -519,6 +530,10 @@ tipo_documento: "CI" carta d'identità, "TS" tessera sanitaria, "PP" passaporto,
   <div class="sinfo" id="sinfo">Compila i dati per generare il contratto</div>
   <div style="display:flex;gap:7px">
     <button class="btn btn-ghost" onclick="resetForm()">↺ Reset</button>
+    <button class="btn btn-ghost" id="btn-stampa" onclick="generaContratto(true)" disabled title="PDF non modificabile, pronto per la stampa">
+      <span class="spinner"></span>
+      <span class="btn-text">🖨 PDF per stampa</span>
+    </button>
     <button class="btn btn-primary" id="btn-genera" onclick="generaContratto()" disabled>
       <span class="spinner"></span>
       <span class="btn-text">Genera PDF</span>
@@ -529,6 +544,13 @@ tipo_documento: "CI" carta d'identità, "TS" tessera sanitaria, "PP" passaporto,
 <div class="toast" id="toast"></div>
 
 <script>
+// ─── Utilità sicurezza ────────────────────────────────────
+// Escape per tutto ciò che finisce in innerHTML / attributi (offerte e JSON incollati non sono fidati)
+function esc(s){
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // ─── State ────────────────────────────────────────────────
 let vuoleLuce = false, vuoleGas = false;
 let tipiLuce = new Set();
@@ -540,21 +562,43 @@ let categorie_gas = new Set();
 loadOfferte();
 
 function loadOfferte(){
-  fetch('/api/offerte').then(r=>r.json()).then(data=>{
+  fetch('/api/offerte').then(r=>{
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(data=>{
     offerte = data;
     renderOfferteSelects();
     renderOfferteManager();
-  });
+  }).catch(e=>showToast('Impossibile caricare le offerte: '+e.message,'toast-err'));
+}
+
+// POST sulle offerte con gestione errori; ritorna i dati o null
+async function postOfferte(url, body){
+  try{
+    const res = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      showToast(data.error || 'Errore nel salvataggio delle offerte','toast-err');
+      if(res.status===409) loadOfferte();   // lista cambiata: riallinea
+      return null;
+    }
+    offerte = data.offerte;
+    renderOfferteSelects();
+    renderOfferteManager();
+    return data;
+  }catch(e){
+    showToast('Errore di rete: '+e.message,'toast-err');
+    return null;
+  }
 }
 
 function renderOfferteSelects(){
   const sl = document.getElementById('offerta_luce');
   const sg = document.getElementById('offerta_gas');
   const cl = sl.value, cg = sg.value;
-  sl.innerHTML = '<option value="">— seleziona —</option>';
-  sg.innerHTML = '<option value="">— seleziona —</option>';
-  offerte.luce.forEach(o => sl.innerHTML += `<option value="${o.nome}" data-codice="${o.codice}">${o.nome}</option>`);
-  offerte.gas.forEach(o  => sg.innerHTML += `<option value="${o.nome}" data-codice="${o.codice}">${o.nome}</option>`);
+  const opt = o => `<option value="${esc(o.nome)}" data-codice="${esc(o.codice)}">${esc(o.nome)}</option>`;
+  sl.innerHTML = '<option value="">— seleziona —</option>' + offerte.luce.map(opt).join('');
+  sg.innerHTML = '<option value="">— seleziona —</option>' + offerte.gas.map(opt).join('');
   sl.value = cl; sg.value = cg;
 }
 
@@ -565,12 +609,12 @@ function renderOfferteManager(){
     el.innerHTML = offerte[tipo].map((o,i)=>`
       <div class="offerta-row" id="offerta-row-${tipo}-${i}">
         <div id="offerta-view-${tipo}-${i}" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-          <span class="offerta-nome">${o.nome}</span>
-          <span class="offerta-cod">${o.codice}</span>
+          <span class="offerta-nome">${esc(o.nome)}</span>
+          <span class="offerta-cod">${esc(o.codice)}</span>
         </div>
         <div id="offerta-edit-${tipo}-${i}" style="display:none;flex:1;gap:6px;align-items:center">
-          <input type="text" id="edit-nome-${tipo}-${i}" value="${o.nome}" style="flex:1;padding:4px 7px;font-size:12px;border:1px solid var(--accent);border-radius:4px;outline:none">
-          <input type="text" id="edit-cod-${tipo}-${i}"  value="${o.codice}" style="width:110px;padding:4px 7px;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--accent);border-radius:4px;outline:none">
+          <input type="text" id="edit-nome-${tipo}-${i}" value="${esc(o.nome)}" style="flex:1;padding:4px 7px;font-size:12px;border:1px solid var(--accent);border-radius:4px;outline:none">
+          <input type="text" id="edit-cod-${tipo}-${i}"  value="${esc(o.codice)}" style="width:110px;padding:4px 7px;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--accent);border-radius:4px;outline:none">
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button class="offerta-del" id="btn-edit-${tipo}-${i}"  onclick="iniziaModifica('${tipo}',${i})"  title="Modifica" style="color:var(--accent)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
@@ -605,11 +649,9 @@ async function salvaModifica(tipo, idx){
   const nome = document.getElementById(`edit-nome-${tipo}-${idx}`).value.trim();
   const cod  = document.getElementById(`edit-cod-${tipo}-${idx}`).value.trim();
   if(!nome||!cod){ showToast('Nome e codice obbligatori','toast-err'); return; }
-  const res = await fetch('/api/offerte/modifica',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo,index:idx,nome,codice:cod})});
-  const data = await res.json();
-  offerte = data.offerte;
-  renderOfferteSelects();
-  renderOfferteManager();
+  const prev = (offerte[tipo]||[])[idx] || {};
+  const data = await postOfferte('/api/offerte/modifica',{tipo,index:idx,nome,codice:cod,atteso_nome:prev.nome,atteso_codice:prev.codice});
+  if(!data) return;
   showToast(`✓ Offerta aggiornata`,'toast-ok');
 }
 
@@ -626,23 +668,18 @@ async function aggiungiOfferta(tipo){
   const nome = document.getElementById(`new-${tipo}-nome`).value.trim();
   const cod  = document.getElementById(`new-${tipo}-cod`).value.trim();
   if(!nome||!cod){ showToast('Inserisci nome e codice','toast-err'); return; }
-  const res = await fetch('/api/offerte/aggiungi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo,nome,codice:cod})});
-  const data = await res.json();
-  offerte = data.offerte;
+  const data = await postOfferte('/api/offerte/aggiungi',{tipo,nome,codice:cod});
+  if(!data) return;
   document.getElementById(`new-${tipo}-nome`).value='';
   document.getElementById(`new-${tipo}-cod`).value='';
-  renderOfferteSelects();
-  renderOfferteManager();
   showToast(`Offerta "${nome}" aggiunta`,'toast-ok');
 }
 
 async function eliminaOfferta(tipo, idx){
   if(!confirm('Eliminare questa offerta?')) return;
-  const res = await fetch('/api/offerte/elimina',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo,index:idx})});
-  const data = await res.json();
-  offerte = data.offerte;
-  renderOfferteSelects();
-  renderOfferteManager();
+  const prev = (offerte[tipo]||[])[idx] || {};
+  const data = await postOfferte('/api/offerte/elimina',{tipo,index:idx,atteso_nome:prev.nome,atteso_codice:prev.codice});
+  if(!data) return;
   showToast('Offerta eliminata','toast-info');
 }
 
@@ -683,12 +720,14 @@ function toggleCat(cat, el){
   else { categorie_gas.add(cat); el.classList.add('sel-gas'); }
 }
 
-// ─── Tipo richiesta multi-check ───────────────────────────
+// ─── Tipo richiesta (selezione singola: il PDF ha un solo radio) ──
 function toggleTipo(fornitura, tipo, el){
   const set = fornitura === 'luce' ? tipiLuce : tipiGas;
   const cls = fornitura === 'luce' ? 'sel-luce' : 'sel-gas';
-  if(set.has(tipo)){ set.delete(tipo); el.classList.remove(cls); }
-  else             { set.add(tipo);    el.classList.add(cls);    }
+  const eraSelezionato = set.has(tipo);
+  set.clear();
+  document.querySelectorAll(`#rg-tipo-${fornitura} .cpill`).forEach(p=>p.classList.remove(cls));
+  if(!eraSelezionato){ set.add(tipo); el.classList.add(cls); }
 }
 
 // ─── Radio ────────────────────────────────────────────────
@@ -725,13 +764,17 @@ function toggleEsec(){
   const cb = document.getElementById('tog-esec');
   cb.checked = !cb.checked;
 }
+function toggleInfo(){
+  const cb = document.getElementById('tog-info');
+  cb.checked = !cb.checked;
+}
 
 // ─── Summary / btn ────────────────────────────────────────
 function updateSummary(){
   const c = document.getElementById('cognome').value;
   const n = document.getElementById('nome').value;
   let parts=[];
-  if(c||n) parts.push(`${c} ${n}`.trim());
+  if(c||n) parts.push(esc(`${c} ${n}`.trim()));
   if(vuoleLuce) parts.push('<span class="badge-luce">⚡ Luce</span>');
   if(vuoleGas)  parts.push('<span class="badge-gas">🔥 Gas</span>');
   const el = document.getElementById('sinfo');
@@ -741,9 +784,10 @@ function updateSummary(){
 function updateBtn(){
   const ok = document.getElementById('cognome').value &&
              document.getElementById('nome').value &&
-             document.getElementById('cf').value.length===16 &&
+             cfValido(document.getElementById('cf').value) &&
              (vuoleLuce||vuoleGas);
   document.getElementById('btn-genera').disabled = !ok;
+  document.getElementById('btn-stampa').disabled = !ok;
 }
 document.querySelectorAll('input,select').forEach(el=>{
   el.addEventListener('input',updateSummary);
@@ -829,7 +873,7 @@ function renderBollettaPreview(d){
   container.innerHTML = campi.map(c=>c.val?`
     <div class="field">
       <label>${c.label}</label>
-      <input type="text" id="${c.id}" value="${c.val}">
+      <input type="text" id="${c.id}" value="${esc(c.val)}">
     </div>`:'').join('');
   document.getElementById('bolletta-preview').style.display = 'block';
 }
@@ -874,6 +918,19 @@ function showTab_direct(id){
 }
 
 // ─── Validazione CF ──────────────────────────────────────
+// Stessa logica di validaCF, senza effetti sull'interfaccia (usata dal pulsante Genera)
+function cfValido(cf){
+  cf = (cf||'').toUpperCase().trim();
+  if(!/^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST]{1}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{3}[A-Z]{1}$/.test(cf)) return false;
+  const odd=[1,0,5,7,9,13,15,17,19,21,2,4,18,20,11,3,6,8,12,14,16,10,22,25,24,23];
+  let s=0;
+  for(let i=0;i<15;i++){
+    const c=cf.charCodeAt(i), v=(c>=48&&c<=57)?c-48:c-65;
+    s += (i%2===0) ? odd[v] : v;
+  }
+  return cf[15] === String.fromCharCode(65 + (s % 26));
+}
+
 function validaCF(input){
   const cf = input.value.toUpperCase().trim();
   const field = input.closest('.field');
@@ -942,9 +999,11 @@ function fmtData(val){
 }
 
 // ─── Genera PDF ───────────────────────────────────────────
-async function generaContratto(){
-  const btn = document.getElementById('btn-genera');
-  btn.classList.add('loading'); btn.disabled=true;
+async function generaContratto(appiattito=false){
+  const btn = document.getElementById(appiattito ? 'btn-stampa' : 'btn-genera');
+  btn.classList.add('loading');
+  document.getElementById('btn-genera').disabled=true;
+  document.getElementById('btn-stampa').disabled=true;
 
   const payload = {
     cognome:  document.getElementById('cognome').value,
@@ -995,17 +1054,27 @@ async function generaContratto(){
     titolare_cf:      document.getElementById('titolare_cf').value,
     banca: document.getElementById('banca').value,
     esecuzione_anticipata: document.getElementById('tog-esec').checked,
+    appiattito: appiattito === true,
+    informativa_letta: document.getElementById('tog-info').checked,
+    consensi: {
+      marketing:    document.getElementById('cons_marketing').value,
+      profilazione: document.getElementById('cons_profilazione').value,
+      terzi:        document.getElementById('cons_terzi').value,
+    },
   };
 
   try {
     const res = await fetch('/api/compila',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(!res.ok) throw new Error('Errore nella generazione');
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.error || ('Errore nella generazione (HTTP '+res.status+')'));
+    }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href=url; a.download=`Contratto_Alperia_${payload.cognome}_${payload.nome}.pdf`;
+    a.href=url; a.download=`Contratto_Alperia_${payload.cognome}_${payload.nome}${appiattito===true?'_STAMPA':''}.pdf`;
     a.click(); URL.revokeObjectURL(url);
-    showToast('✓ PDF scaricato!','toast-ok');
+    showToast(appiattito===true ? '✓ PDF per stampa scaricato!' : '✓ PDF scaricato!','toast-ok');
   } catch(e){ showToast('Errore: '+e.message,'toast-err'); }
   finally { btn.classList.remove('loading'); updateBtn(); }
 }
@@ -1018,6 +1087,7 @@ function resetForm(){
   ['tog-forn-uguale','tog-residente','tog-sepa','tog-debitore'].forEach(id=>document.getElementById(id).checked=true);
   document.getElementById('titolare-diverso').style.display='none';
   document.getElementById('tog-esec').checked=false;
+  document.getElementById('tog-info').checked=false;
   document.getElementById('forn-extra').style.display='none';
   document.getElementById('sepa-fields').style.display='block';
   vuoleLuce=false; vuoleGas=false;
@@ -1118,7 +1188,7 @@ function renderDocPreview(d){
   container.innerHTML = campi.map(c => c.val ? `
     <div class="field">
       <label>${c.label}</label>
-      <input type="text" id="${c.id}" value="${c.val}">
+      <input type="text" id="${c.id}" value="${esc(c.val)}">
     </div>` : '').join('');
   document.getElementById('doc-preview').style.display = 'block';
 }
